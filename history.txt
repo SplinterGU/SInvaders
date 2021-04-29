@@ -1,0 +1,35 @@
+Version 1.0
+
+- Initial Version
+
+Version 1.1
+
+- Game syncronized at 50hz
+- Fix saucer/UFO speed
+- Fix player shot speed
+- Fix alien shot speed normal, and when less of 9 aliens (bit faster)
+- Smooth alien shot animation
+- Add sounds BeepFX based for "BEEPER" Sound (original BeepFX player by Shiru http://shiru.untergrund.net)
+- Add AY Sounds (Fuller Box, Sinclair 128k)
+- AY Sounds from and made with AYFXEdit (https://zx.remysharp.com/audio/)
+- Autodetect Sound (Beeper, FullerBox, Sinclair 128k)
+- If only 1 alien left, move a bit faster from left to right, as original
+- Fix no delete right arrow in configure menu when players control reach the limit
+
+Version 1.2
+
+- Add ZX81 Version (require zxpand or rampack 32k)
+- Now aliens move one at a time
+- Fix aliens score
+- [ZX81] wrx support
+- [ZX81] chroma-81
+- [ZX81] zxpand joystick support
+
+Version 1.3
+
+- Fix gameplay 2 players
+- Re-code lot of functions to ASM
+- General better speed
+- [ZX81] AY-Sound + Full Chroma-81 Support
+- [ZX81] Full version, look as ZX-Spectrum version
+- Fix other minors bugs
