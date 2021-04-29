@@ -33,3 +33,7 @@ Version 1.3
 - [ZX81] AY-Sound + Full Chroma-81 Support
 - [ZX81] Full version, look as ZX-Spectrum version
 - Fix other minors bugs
+
+Version 1.3+
+
+- Reduce alien step sound volume to 50%
