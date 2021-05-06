@@ -1,6 +1,10 @@
 EXTERN _ClearRows, _PrintChar, _PrintAt, _PrintAtArr, _PrintNumAt, _WaitFrame
-EXTERN _numLives, _bonusLife, _displayCoinage, _soundSystem, _player
+EXTERN _numLives, _bonusLife, _displayCoinage, _player
 EXTERN _currentMenuScreen, _syskey
+
+IFNDEF __NOSOUND__
+EXTERN _soundSystem
+ENDIF
 
 SECTION data_user
 
@@ -500,8 +504,10 @@ l_setup_item_ok:
     bit 0,e     ; shot
     jr  Z,l_setup_continue
 ;screens.c:491: syskey.keyPressed = 0;
+IFNDEF __NOSOUND__
     ld  a,(_soundSystem)
     call _SetSoundCard_internal
+ENDIF
     xor a
     ld  (_syskey),a
 ;screens.c:492: return 0;
