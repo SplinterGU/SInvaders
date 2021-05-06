@@ -45,20 +45,21 @@ IFDEF __ZX81__
     ex de,hl
 ENDIF
 IFDEF __SPECTRUM__
+    ; 77t
     ex de,hl
     ld h, ScreenTables/256
     ld l,b
     ld a,(hl)
-                                                    
+
     inc h
     ld l,(hl)
     ld h,a
-                                                    
+
     ld a,c
     srl a
     srl a
     srl a
-                                                    
+
     add a,l
     ld l,a
     ex de,hl
@@ -70,9 +71,15 @@ ENDIF
 ; by Juan Jose Ponteprino
 ; **************************************************************************************************'
 
+SECTION data_user
+
+rotate_bits:
+    db 0
+
 IFDEF __SPECTRUM__
 EXTERN ScreenTables
 ENDIF
+
 EXTERN _CHARSET
 
 SECTION code_user
@@ -99,19 +106,27 @@ _PutSprite1_internal:
                             ; hl => sprite data
                             ; de => target
 
+    ld a,c
+    and 7
+    ld (rotate_bits),a
+
     ld a,8                  ; set counter TO 8 - Bytes of Character Data TO put down
 
 Loop1:
+IFDEF __ZX81__
     push af                 ; save off Counter
-
+ENDIF
+IFDEF __SPECTRUM__
+    ex af,af'
+ENDIF    
                             ; save off Address of Character Data, Screen Address, Screen Address
 
-    ld a,c                  ; c = columna, a = posiciones a rotar
-    and 7
-    jp z, norotate1           ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything          '
+    ld a,(rotate_bits)      ; c = columna, a = posiciones a rotar
+    or a
+    jr z, norotate1         ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything
 
     push hl                 ; Data Address
-    push bc                 ; save x and y
+;    push bc                 ; save x and y
     push de                 ; Screen Address
     push de                 ; Screen Address
 
@@ -157,7 +172,7 @@ rotate1:
     ld (hl),a
 
     pop de                  ; get the Screen Address back into DE, increment Y
-    pop bc
+;    pop bc
     pop hl                  ; get the Address of the Character Data back AND increment it ready FOR the NEXT BYTE of data
 
 row_complete1:
@@ -171,21 +186,30 @@ IFDEF __ZX81__
 ENDIF
 IFDEF __SPECTRUM__
     inc d                   ; it AND Increment the Y value in B AS well
-ENDIF
-    inc b
 
-IFDEF __SPECTRUM__
-    ld a,b                  ; now check IF the Y value has gone OVER a Character Boundary i.e. we will need TO recalculate the Screen
+    ld a,d                  ; now check IF the Y value has gone OVER a Character Boundary i.e. we will need TO recalculate the Screen
                             ; Address IF we've jumped from one Character Line to another - messy but necessary especially for lines 7 and 15   '
     and 7
-    jp z, getscraddr1
+    jp nz, addr_ok1
+    ld a,e
+    add 32
+    ld e,a
+    jp c, addr_ok1
+    ld a,d
+    sub 8
+    ld d,a
 
-getscraddr1_return:
+addr_ok1:
 ENDIF
 
     inc hl
 
+IFDEF __ZX81__
     pop af                  ; get the Counter value back, decrement it AND GO back FOR another write IF we haven't reached the end yet   '
+ENDIF
+IFDEF __SPECTRUM__
+    ex af,af'
+ENDIF    
     dec a
     jp nz, Loop1
     ret
@@ -195,12 +219,6 @@ norotate1:
     ld (de),a
 
     jp row_complete1
-
-IFDEF __SPECTRUM__
-getscraddr1:
-    GET_SCREEN_ADDR
-    jp getscraddr1_return
-ENDIF
 
 
 ; **************************************************************************************************'
@@ -222,19 +240,27 @@ _PutSprite1M_internal:
                             ; hl => sprite data
                             ; de => target
 
+    ld a,c
+    and 7
+    ld (rotate_bits),a
+
     ld a,8                  ; set counter TO 8 - Bytes of Character Data TO put down
 
 Loop1M:
+IFDEF __ZX81__
     push af                 ; save off Counter
-
+ENDIF
+IFDEF __SPECTRUM__
+    ex af,af'
+ENDIF    
                             ; save off Address of Character Data, Screen Address, Screen Address
 
-    ld a,c                  ; c = columna, a = posiciones a rotar
-    and 7
-    jp z, norotate1M          ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything          '
+    ld a,(rotate_bits)      ; c = columna, a = posiciones a rotar
+    or a
+    jr z, norotate1M        ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything
 
 ;    push hl                 ; Data Address
-    push bc                 ; save x and y
+;    push bc                 ; save x and y
 ;    push de                 ; Screen Address
 
     ld b,a                  ; rotate times
@@ -261,7 +287,7 @@ rotate1M:
     dec e
 
 ;    pop de                  ; get the Screen Address back into DE, increment Y
-    pop bc
+;    pop bc
 ;    pop hl                  ; get the Address of the Character Data back AND increment it ready FOR the NEXT BYTE of data
 
 row_complete1M:
@@ -275,21 +301,30 @@ IFDEF __ZX81__
 ENDIF
 IFDEF __SPECTRUM__
     inc d                   ; it AND Increment the Y value in B AS well
-ENDIF
-    inc b
-
-IFDEF __SPECTRUM__
-    ld a,b                  ; now check IF the Y value has gone OVER a Character Boundary i.e. we will need TO recalculate the Screen
+    
+    ld a,d                  ; now check IF the Y value has gone OVER a Character Boundary i.e. we will need TO recalculate the Screen
                             ; Address IF we've jumped from one Character Line to another - messy but necessary especially for lines 7 and 15   '
     and 7
-    jp z, getscraddr1M
+    jp nz, addr_ok1M
+    ld a,e
+    add 32
+    ld e,a
+    jp c, addr_ok1M
+    ld a,d
+    sub 8
+    ld d,a
 
-getscraddr1M_return:
+addr_ok1M:
 ENDIF
 
     inc hl
 
+IFDEF __ZX81__
     pop af                  ; get the Counter value back, decrement it AND GO back FOR another write IF we haven't reached the end yet   '
+ENDIF
+IFDEF __SPECTRUM__
+    ex af,af'
+ENDIF    
     dec a
     jp nz, Loop1M
     ret
@@ -300,12 +335,6 @@ norotate1M:
     ld (de),a
 
     jp row_complete1M
-
-IFDEF __SPECTRUM__
-getscraddr1M:
-    GET_SCREEN_ADDR
-    jp getscraddr1M_return
-ENDIF
 
 ; **************************************************************************************************'
 ; (byte x, byte y, void * spr)
@@ -326,19 +355,27 @@ _PutSprite1D_internal:
                             ; hl => sprite data
                             ; de => target
 
+    ld a,c
+    and 7
+    ld (rotate_bits),a
+
     ld a,8                  ; set counter TO 8 - Bytes of Character Data TO put down
 
 Loop1D:
+IFDEF __ZX81__
     push af                 ; save off Counter
-
+ENDIF
+IFDEF __SPECTRUM__
+    ex af,af'
+ENDIF    
                             ; save off Address of Character Data, Screen Address, Screen Address
 
-    ld a,c                  ; c = columna, a = posiciones a rotar
-    and 7
-    jp z, norotate1D          ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything          '
+    ld a,(rotate_bits)      ; c = columna, a = posiciones a rotar
+    or a
+    jr z, norotate1D        ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything
 
 ;    push hl                 ; Data Address
-    push bc                 ; save x and y
+;    push bc                 ; save x and y
 ;    push de                 ; Screen Address
 
     ld b,a                  ; rotate times
@@ -370,7 +407,7 @@ rotate1D:
     dec e
 
 ;    pop de                  ; get the Screen Address back into DE, increment Y
-    pop bc
+;    pop bc
 ;    pop hl                  ; get the Address of the Character Data back AND increment it ready FOR the NEXT BYTE of data
 
 row_complete1D:
@@ -384,21 +421,30 @@ IFDEF __ZX81__
 ENDIF
 IFDEF __SPECTRUM__
     inc d                   ; it AND Increment the Y value in B AS well
-ENDIF
-    inc b
 
-IFDEF __SPECTRUM__
-    ld a,b                  ; now check IF the Y value has gone OVER a Character Boundary i.e. we will need TO recalculate the Screen
+    ld a,d                  ; now check IF the Y value has gone OVER a Character Boundary i.e. we will need TO recalculate the Screen
                             ; Address IF we've jumped from one Character Line to another - messy but necessary especially for lines 7 and 15   '
     and 7
-    jp z, getscraddr1D
+    jp nz, addr_ok1D
+    ld a,e
+    add 32
+    ld e,a
+    jp c, addr_ok1D
+    ld a,d
+    sub 8
+    ld d,a
 
-getscraddr1D_return:
+addr_ok1D:
 ENDIF
 
     inc hl
 
+IFDEF __ZX81__
     pop af                  ; get the Counter value back, decrement it AND GO back FOR another write IF we haven't reached the end yet   '
+ENDIF
+IFDEF __SPECTRUM__
+    ex af,af'
+ENDIF    
     dec a
     jp nz, Loop1D
     ret
@@ -412,12 +458,6 @@ norotate1D:
     ex de, hl
 
     jp row_complete1D
-
-IFDEF __SPECTRUM__
-getscraddr1D:
-    GET_SCREEN_ADDR
-    jp getscraddr1D_return
-ENDIF
 
 
 ; **************************************************************************************************'
@@ -439,18 +479,26 @@ _PutSprite2_internal:
                             ; hl => sprite data
                             ; de => target
 
+    ld a,c
+    and 7
+    ld (rotate_bits),a
+
     ld a,8                  ; set counter TO 8 - Bytes of Character Data TO put down
 
 Loop2:
+IFDEF __ZX81__
     push af                 ; save off Counter
+ENDIF
+IFDEF __SPECTRUM__
+    ex af,af'
+ENDIF
 
     push hl                 ; Data Address
                             ; save off Address of Character Data, Screen Address, Screen Address
-    push bc                 ; save x and y
 
-    ld a,c                  ; c = columna, a = posiciones a rotar
-    and 7
-    jp z, norotate2         ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything
+    ld a,(rotate_bits)      ; c = columna, a = posiciones a rotar
+    or a
+    jr z, norotate2         ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything
 
     push de                 ; Screen Address
     push de                 ; Screen Address
@@ -525,27 +573,35 @@ IFDEF __ZX81__
     adc a,d
     ld d,a                  ; it AND Increment the Y value in B AS well
 ENDIF
-    pop bc
+;    pop bc
 
 IFDEF __SPECTRUM__
     inc d                   ; it AND Increment the Y value in B AS well
-ENDIF
-    inc b
-
-IFDEF __SPECTRUM__
-    ld a,b                  ; now check IF the Y value has gone OVER a Character Boundary i.e. we will need TO recalculate the Screen
+    ld a,d                  ; now check IF the Y value has gone OVER a Character Boundary i.e. we will need TO recalculate the Screen
                             ; Address IF we've jumped from one Character Line to another - messy but necessary especially for lines 7 and 15   '
     and 7
-    jp z, getscraddr2
+    jp nz, addr_ok2
+    ld a,e
+    add 32
+    ld e,a
+    jp c, addr_ok2
+    ld a,d
+    sub 8
+    ld d,a
 
-getscraddr2_return:
+addr_ok2:
 ENDIF
 
     pop hl                  ; get the Address of the Character Data back AND increment it ready FOR the NEXT BYTE of data
     inc hl
     inc hl
 
+IFDEF __ZX81__
     pop af                  ; get the Counter value back, decrement it AND GO back FOR another write IF we haven't reached the end yet   '
+ENDIF
+IFDEF __SPECTRUM__
+    ex af,af'
+ENDIF    
     dec a
     jp nz, Loop2
     ret
@@ -568,13 +624,6 @@ skip_2nd_byte2:
     dec e
 
     jp row_complete2
-
-IFDEF __SPECTRUM__
-getscraddr2:
-    GET_SCREEN_ADDR
-    jp getscraddr2_return
-ENDIF
-
 
 ; -------------------------------------------------------
 ; (byte x, byte y, byte char, byte mode )
@@ -607,7 +656,6 @@ _PrintChar:
     dec a
     jp z, _PutSprite1D_internal
     ret
-
 
 ; -------------------------------------------------------
 ; (byte x, byte y, void * spr)

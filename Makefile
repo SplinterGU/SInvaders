@@ -59,10 +59,10 @@ ifeq ("$(TARGET)","+zx81")
 #	CFLAGS+=-pragma-include:zx81pragma.inc --opt-code-speed --list --c-code-in-asm -D__NOSOUND__
 
 	# Full Choma81
-#	LDFLAGS+=-nostdinc -pragma-include:zx81pragma.inc -subtype=chroma -clib=wrx -startup=23 --opt-code-speed
+	LDFLAGS+=-nostdinc -pragma-include:zx81pragma.inc -subtype=chroma -clib=wrx -startup=23 --opt-code-speed
 
 	# Basic Chroma81
-	LDFLAGS+=-nostdinc -pragma-include:zx81pragma.inc -subtype=wrx -clib=wrx -startup=3 --opt-code-speed
+#	LDFLAGS+=-nostdinc -pragma-include:zx81pragma.inc -subtype=wrx -clib=wrx -startup=3 --opt-code-speed
 
 	# --list --c-code-in-asm
 	EXEC=$(EXEC_OUTPUT).P
