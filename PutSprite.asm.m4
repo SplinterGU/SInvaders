@@ -92,9 +92,9 @@ PUBLIC _PutSprite1_internal, _PutSprite1M_internal, _PutSprite1D_internal, _PutS
 ; **************************************************************************************************'
 
 _PutSprite1:
-    pop hl      ; return
-    pop bc      ; coordenadas
-    ex (sp),hl  ; sprite
+    pop hl                  ; return
+    pop bc                  ; coordenadas
+    ex (sp),hl              ; sprite
 
 _PutSprite1_internal:
 
@@ -105,7 +105,6 @@ _PutSprite1_internal:
     GET_SCREEN_ADDR
                             ; hl => sprite data
                             ; de => target
-
     ld a,c
     and 7
     ld (rotate_bits),a
@@ -119,38 +118,31 @@ ENDIF
 IFDEF __SPECTRUM__
     ex af,af'
 ENDIF    
-                            ; save off Address of Character Data, Screen Address, Screen Address
-
-    ld a,(rotate_bits)      ; c = columna, a = posiciones a rotar
+    ld a,(rotate_bits)      ; a = posiciones a rotar
     or a
     jr z, norotate1         ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything
 
     push hl                 ; Data Address
-;    push bc                 ; save x and y
-    push de                 ; Screen Address
     push de                 ; Screen Address
 
     ld b,a                  ; rotate times
 
-    ld e,(hl)
     xor a
-    ld h,255
-    ld l,a
+    ld e,(hl)
+    ld d,a
+    ld c,255
 
 rotate1:
-    srl e ; rotate sprite
-    rra
+    srl e                   ; rotate sprite
+    rr d
 
-    srl h ; rotate mask
-    rr l
+    srl c                   ; rotate mask
+    rra
     djnz rotate1
 
-    ld d,a
-
-    ld c, h     ; mascara = c, b 
-    ld b, l
+    ld b,a                  ; mascara = c, b 
                 
-    pop hl      ; recupero direccion destino
+    pop hl                  ; recupero direccion destino
 
     ld a,c
     cpl
@@ -160,19 +152,20 @@ rotate1:
     cpl
     ld b,a
 
-    ld a,(hl)   ; 1er byte rotado del sprite (con mascara)
+    ld a,(hl)               ; 1er byte rotado del sprite (con mascara)
     and c
     or e
     ld (hl),a
 
     inc l
-    ld a,(hl)   ; 2er byte rotado del sprite (con mascara)
+    ld a,(hl)               ; 2er byte rotado del sprite (con mascara)
     and b
     or d
     ld (hl),a
 
-    pop de                  ; get the Screen Address back into DE, increment Y
-;    pop bc
+    dec l
+    ex de,hl
+
     pop hl                  ; get the Address of the Character Data back AND increment it ready FOR the NEXT BYTE of data
 
 row_complete1:
@@ -225,10 +218,10 @@ norotate1:
 ; (byte x, byte y, void * spr)
 ; **************************************************************************************************'
 
-_PutSprite1Merge: ; Merge
-    pop hl      ; return
-    pop bc      ; coordenadas
-    ex (sp),hl  ; sprite
+_PutSprite1Merge:           ; Merge
+    pop hl                  ; return
+    pop bc                  ; coordenadas
+    ex (sp),hl              ; sprite
 
 _PutSprite1M_internal:
 
@@ -252,16 +245,11 @@ IFDEF __ZX81__
 ENDIF
 IFDEF __SPECTRUM__
     ex af,af'
-ENDIF    
-                            ; save off Address of Character Data, Screen Address, Screen Address
+ENDIF
 
-    ld a,(rotate_bits)      ; c = columna, a = posiciones a rotar
+    ld a,(rotate_bits)      ; a = posiciones a rotar
     or a
     jr z, norotate1M        ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything
-
-;    push hl                 ; Data Address
-;    push bc                 ; save x and y
-;    push de                 ; Screen Address
 
     ld b,a                  ; rotate times
 
@@ -269,26 +257,22 @@ ENDIF
     xor a
 
 rotate1M:
-    srl c ; rotate sprite
+    srl c                   ; rotate sprite
     rra
     djnz rotate1M
 
     ld b,a
                 
-    ld a,(de)   ; 1er byte rotado del sprite (con mascara)
+    ld a,(de)               ; 1er byte rotado del sprite (con mascara)
     or c
     ld (de),a
 
     inc e
-    ld a,(de)   ; 2er byte rotado del sprite (con mascara)
+    ld a,(de)               ; 2er byte rotado del sprite (con mascara)
     or b
     ld (de),a
 
     dec e
-
-;    pop de                  ; get the Screen Address back into DE, increment Y
-;    pop bc
-;    pop hl                  ; get the Address of the Character Data back AND increment it ready FOR the NEXT BYTE of data
 
 row_complete1M:
 IFDEF __ZX81__
@@ -341,9 +325,9 @@ norotate1M:
 ; **************************************************************************************************'
 
 _PutSprite1Delete:
-    pop hl      ; return
-    pop bc      ; coordenadas
-    ex (sp),hl  ; sprite
+    pop hl                  ; return
+    pop bc                  ; coordenadas
+    ex (sp),hl              ; sprite
 
 _PutSprite1D_internal:
 
@@ -368,15 +352,9 @@ ENDIF
 IFDEF __SPECTRUM__
     ex af,af'
 ENDIF    
-                            ; save off Address of Character Data, Screen Address, Screen Address
-
-    ld a,(rotate_bits)      ; c = columna, a = posiciones a rotar
+    ld a,(rotate_bits)      ; a = posiciones a rotar
     or a
     jr z, norotate1D        ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything
-
-;    push hl                 ; Data Address
-;    push bc                 ; save x and y
-;    push de                 ; Screen Address
 
     ld b,a                  ; rotate times
 
@@ -384,7 +362,7 @@ ENDIF
     xor a
 
 rotate1D:
-    srl c ; rotate sprite
+    srl c                   ; rotate sprite
     rra
     djnz rotate1D
 
@@ -395,20 +373,16 @@ rotate1D:
     cpl
     ld c,a
 
-    ld a,(de)   ; 1er byte rotado del sprite (con mascara)
+    ld a,(de)               ; 1er byte rotado del sprite (con mascara)
     and c
     ld (de),a
 
     inc e
-    ld a,(de)   ; 2er byte rotado del sprite (con mascara)
+    ld a,(de)               ; 2er byte rotado del sprite (con mascara)
     and b
     ld (de),a
 
     dec e
-
-;    pop de                  ; get the Screen Address back into DE, increment Y
-;    pop bc
-;    pop hl                  ; get the Address of the Character Data back AND increment it ready FOR the NEXT BYTE of data
 
 row_complete1D:
 IFDEF __ZX81__
@@ -492,16 +466,14 @@ ENDIF
 IFDEF __SPECTRUM__
     ex af,af'
 ENDIF
+    push hl                 ; save off Address of Character Data, Screen Address, Screen Address
 
-    push hl                 ; Data Address
-                            ; save off Address of Character Data, Screen Address, Screen Address
-
-    ld a,(rotate_bits)      ; c = columna, a = posiciones a rotar
+    ld a,(rotate_bits)      ; a = posiciones a rotar
     or a
     jr z, norotate2         ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything
 
     push de                 ; Screen Address
-    push de                 ; Screen Address
+;    push de                 ; Screen Address
 
     ld b,a                  ; rotate times
 
@@ -547,22 +519,28 @@ rotate2:
     inc l                   ; Increment the Screen Address AND check TO see IF it's at the end of a line,
     ld a,l
     and 31                  ; if so THEN there's no need to put down the second part of the sprite
-    jp z, row_complete2b
+    jp z, row_complete2b2
 
     ld (hl),c               ; 2do byte rotado del sprite (va directo, sin mascara)
 
     inc l
     ld a,l
     and 31                  ; if so THEN there's no need to put down the 3rd part of the sprite
-    jp z, row_complete2b
+    jp z, row_complete2b1
 
     ld a,(hl)               ; 3er byte rotado del sprite (con mascara)
     and b
     or d
     ld (hl),a
 
+row_complete2b1:
+    dec l
+row_complete2b2:
+    dec l
+    ex de,hl
+
 row_complete2b:
-    pop de                  ; get the Screen Address back into DE, increment Y
+;    pop de                  ; get the Screen Address back into DE, increment Y
 
 row_complete2:
 IFDEF __ZX81__
@@ -573,8 +551,6 @@ IFDEF __ZX81__
     adc a,d
     ld d,a                  ; it AND Increment the Y value in B AS well
 ENDIF
-;    pop bc
-
 IFDEF __SPECTRUM__
     inc d                   ; it AND Increment the Y value in B AS well
     ld a,d                  ; now check IF the Y value has gone OVER a Character Boundary i.e. we will need TO recalculate the Screen
@@ -617,7 +593,6 @@ norotate2:
     and 31                  ; if so THEN there's no need to put down the 3rd part of the sprite
     jp z, skip_2nd_byte2
 
-;    inc e
     ld a,(hl)
     ld (de),a
 skip_2nd_byte2:
@@ -635,9 +610,13 @@ _PrintChar:
 
     ex de, hl     ; e = char, d = mode
 
+IFDEF _CHARSET
     ld a,e
     sub a,32
     ld l,a
+ELSE
+    ld l,e
+ENDIF
     ld h,0
 
     ld a,d
@@ -646,7 +625,11 @@ _PrintChar:
     add hl,hl
     add hl,hl
 
+IFDEF _CHARSET
     ld de, _CHARSET
+ELSE
+    ld de, (23606)
+ENDIF
     add hl,de
 
     and a
