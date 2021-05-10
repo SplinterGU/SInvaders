@@ -123,14 +123,17 @@ ENDIF
     jr z, norotate1         ; if the the X value is on an actual Character boundary i.e. there's no need to shift anything
 
     push hl                 ; Data Address
-    push de                 ; Screen Address
+;    push de                 ; Screen Address
 
-    ld b,a                  ; rotate times
+    ld  b,a                 ; rotate times
+    ld  c,255               ; mask
 
-    xor a
-    ld e,(hl)
-    ld d,a
-    ld c,255
+    ld  a,(hl)              ; sprite data
+    ld  l,e                 ; hl = screen address (target)
+    ld  h,d                 ; hl = screen address (target)
+    ld  e,a                 ; sprite data
+    xor a                   ; MSB mask
+    ld  d,a                 ; MSB sprite
 
 rotate1:
     srl e                   ; rotate sprite
@@ -142,7 +145,7 @@ rotate1:
 
     ld b,a                  ; mascara = c, b 
                 
-    pop hl                  ; recupero direccion destino
+;    pop hl                  ; recupero direccion destino
 
     ld a,c
     cpl
@@ -479,41 +482,41 @@ ENDIF
 
     ld e,(hl)
     inc hl
-    ld d,(hl)
+    ld c,(hl)
     xor a
-    ld h,255
+    ld d,255                ; mask
     ld l,a
 
 rotate2:
     srl e                   ; rotate sprite
-    rr d
+    rr c
     rra
 
-    srl h                   ; rotate mask
+    srl d                   ; rotate mask
     rr l
     djnz rotate2
 
-    ld c, h                 ; mascara = c, $ff, b 
-    ld b, l
+;    ld c, h                 
+    ld b, l                 ; mascara = d, $ff, b
                 
     pop hl                  ; recupero direccion destino
 
     push af                 ; guardo sprite rotado
 
-    ld a,c
+    ld a,d
     cpl
-    ld c,a
+    ld d,a
 
     ld a,b
     cpl
     ld b,a
 
     ld a,(hl)               ; 1er byte rotado del sprite (con mascara)
-    and c
+    and d
     or e
     ld (hl),a
 
-    ld c,d                  ; 2do byte rotado lo paso a c
+;    ld c,d                  ; 2do byte rotado lo paso a c
     pop de                  ; 3er recupero byte rotado (push af)
 
     inc l                   ; Increment the Screen Address AND check TO see IF it's at the end of a line,
@@ -537,7 +540,7 @@ row_complete2b1:
     dec l
 row_complete2b2:
     dec l
-    ex de,hl
+    ex de,hl                ; de = screen address
 
 row_complete2b:
 ;    pop de                  ; get the Screen Address back into DE, increment Y
