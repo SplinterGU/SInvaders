@@ -127,7 +127,7 @@ _SoundSetCard:
 _SetSoundCard_internal:
 
 IFDEF __SPECTRUM__
-    cp  SOUND_SYS_FULLERBOX+1
+    cp  SOUND_SYS_TS2068+1
 ENDIF
 IFDEF __ZX81__
     cp  SOUND_SYS_ZONX+1
@@ -152,11 +152,21 @@ IFDEF __SPECTRUM__
 
 test_set_fuller:
     cp  SOUND_SYS_FULLERBOX
-    ret nz
+    jr  nz,test_set_ts2068
 
     ; Fuller Box
     ld  hl,0x3f             ; soundPIORegister = 63
     ld  de,0x5f             ; soundPIOData = 95
+    jr  set_sound_system
+
+test_set_ts2068:
+    cp  SOUND_SYS_TS2068
+    ret nz
+
+    ; TS2068/TC2068
+    ld  hl,0xf5             ; soundPIORegister = 245
+    ld  de,0xf6             ; soundPIOData = 246
+
 ENDIF
 
 IFDEF __ZX81__
@@ -178,6 +188,28 @@ set_sound_system:
 IFDEF __SPECTRUM__
 test_card:
     push af
+    call test_card_common
+
+test_card_continue:
+    ; if ( inp( soundPIORegister ) == 170 )
+    in  a,(c)
+    cp  170
+    pop bc
+    ret nz
+
+    ld  a,b
+    jr  set_sound_system
+
+test_card2:
+    push af
+    call test_card_common
+
+    ; if ( inp( soundPIORegister ) == 170 )
+    ld  c,e ; soundPIOData
+    ld  b,d
+    jr  test_card_continue
+
+test_card_common:
     ; Channel A - Volume 0
     ld  c,l ; soundPIORegister
     ld  b,h
@@ -205,15 +237,8 @@ test_card:
     ld  b,h
     xor a
     out (c),a
+    ret
 
-    ; if ( inp( soundPIORegister ) == 170 )
-    in  a,(c)
-    cp  170
-    pop bc
-    ret nz
-
-    ld  a,b
-    jr  set_sound_system
 ENDIF
 
 ; void SoundDetect();
@@ -222,17 +247,24 @@ ENDIF
 ; ---------------------------------
 _SoundDetectCard:
 IFDEF __SPECTRUM__
-    ; Sinclair 128k
-    ld  hl,0xfffd           ; soundPIORegister = 65533
-    ld  de,0xbffd           ; soundPIOData = 49149
-    ld  a, SOUND_SYS_SINCLAIR128K
-    call test_card
-    ret z
-
     ; Fuller Box
     ld  hl,0x3f             ; soundPIORegister = 63
     ld  de,0x5f             ; soundPIOData = 95
     ld  a, SOUND_SYS_FULLERBOX
+    call test_card
+    ret z
+
+    ; TS2068/TC2068
+    ld  hl,0xf5             ; soundPIORegister = 245
+    ld  de,0xf6             ; soundPIOData = 246
+    ld  a, SOUND_SYS_TS2068
+    call test_card2
+    ret z
+
+    ; Sinclair 128k
+    ld  hl,0xfffd           ; soundPIORegister = 65533
+    ld  de,0xbffd           ; soundPIOData = 49149
+    ld  a, SOUND_SYS_SINCLAIR128K
     call test_card
     ret z
 

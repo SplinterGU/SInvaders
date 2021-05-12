@@ -50,9 +50,10 @@ IFDEF __SPECTRUM__
     dw soundTab_str2
     dw soundTab_str3
     dw soundTab_str4
+    dw soundTab_str5
 ENDIF
 IFDEF __ZX81__
-    dw soundTab_str5
+    dw soundTab_str6
 ENDIF
 soundTab_items: equ ( $-soundTab ) / 2 
 
@@ -61,9 +62,10 @@ IFDEF __SPECTRUM__
     soundTab_str2: db "       BEEPER", 0
     soundTab_str3: db "SINCLAIR 128K", 0
     soundTab_str4: db "   FULLER BOX", 0
+    soundTab_str5: db "TS2068/TC2068", 0
 ENDIF
 IFDEF __ZX81__
-    soundTab_str5: db "        ZON-X", 0
+    soundTab_str6: db "        ZON-X", 0
 ENDIF
 ENDIF
 

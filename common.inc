@@ -35,6 +35,7 @@
 #define SOUND_SYS_BEEPER        1
 #define SOUND_SYS_SINCLAIR128K  2
 #define SOUND_SYS_FULLERBOX     3
+#define SOUND_SYS_TS2068        4
 
 
 #define NUM_UNSIGNED 0x80

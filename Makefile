@@ -44,7 +44,8 @@ ifeq ("$(TARGET)","+zx")
 	ISR_H=isr.h
 	ASFLAGS+=-Ca-D__SPECTRUM__ --opt-code-speed --list --c-code-in-asm
 	CFLAGS+=-pragma-include:zpragma.inc -clib=sdcc_iy --opt-code-speed --list --c-code-in-asm
-	LDFLAGS+=-nostdlib -zorg 24800 -pragma-include:zpragma.inc -clib=sdcc_iy -startup=31 -Cz--screen -Czspace3.scr --opt-code-speed --list --c-code-in-asm
+#	LDFLAGS+=-nostdlib -zorg 24800 -pragma-include:zpragma.inc -clib=sdcc_iy -startup=31 -Cz--screen -Czspace3.scr --opt-code-speed --list --c-code-in-asm
+	LDFLAGS+=-nostdlib -zorg 27000 -pragma-include:zpragma.inc -clib=sdcc_iy -startup=31 -Cz--merge -Czloader.tap -Cz--screen -Czspace3.scr --opt-code-speed --list --c-code-in-asm
 	EXEC=$(EXEC_OUTPUT).tap
 endif
 

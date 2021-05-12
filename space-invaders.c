@@ -60,13 +60,12 @@ void main() {
 
     InputDetect();
 
-#ifdef __SPECTRUM__
-    zx_border(INK_BLACK);
-#endif
 #ifndef __NOSOUND__
     SoundDetectCard();
 #endif
 #ifdef __SPECTRUM__
+    zx_border(INK_BLACK);
+
     DelayFrames( 100 ); // 2 seconds
 
     zx_cls(PAPER_BLACK|INK_WHITE);

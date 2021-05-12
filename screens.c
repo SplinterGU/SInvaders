@@ -76,7 +76,7 @@ scrtextA helpScreenTxt[] = {
     { 80,  136,         "H   FOR THIS HELP"        },
     { 64,  160,        "ZX81 VERSION BY"           },
 #endif
-    { 48,  168,     "JUAN JOSE PONTEPRINO V1.3+"   }
+    { 48,  168,     "JUAN JOSE PONTEPRINO V1.4"    }
 };
 
 scrtextA scoreScreenTxt[] = {

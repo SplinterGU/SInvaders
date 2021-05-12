@@ -37,3 +37,9 @@ Version 1.3
 Version 1.3+
 
 - Reduce alien step sound volume to 50%
+
+Version 1.4
+
+- TS2068/TC2068 Support
+- Sprite rutines optimization
+- Fix sound detection
