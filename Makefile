@@ -44,8 +44,14 @@ ifeq ("$(TARGET)","+zx")
 	ISR_H=isr.h
 	ASFLAGS+=-Ca-D__SPECTRUM__ --opt-code-speed --list --c-code-in-asm
 	CFLAGS+=-pragma-include:zpragma.inc -clib=sdcc_iy --opt-code-speed --list --c-code-in-asm
-#	LDFLAGS+=-nostdlib -zorg 24800 -pragma-include:zpragma.inc -clib=sdcc_iy -startup=31 -Cz--screen -Czspace3.scr --opt-code-speed --list --c-code-in-asm
-	LDFLAGS+=-nostdlib -zorg 27000 -pragma-include:zpragma.inc -clib=sdcc_iy -startup=31 -Cz--merge -Czloader.tap -Cz--screen -Czspace3.scr --opt-code-speed --list --c-code-in-asm
+
+# obsolete	LDFLAGS+=-nostdlib -zorg 24800 -pragma-include:zpragma.inc -clib=sdcc_iy -startup=31 -Cz--screen -Czspace3.scr --opt-code-speed --list --c-code-in-asm
+# obsolete	LDFLAGS+=-nostdlib -zorg 27000 -pragma-include:zpragma.inc -clib=sdcc_iy -startup=31 -Cz--merge -Czloader.tap -Cz--screen -Czspace3.scr --opt-code-speed --list --c-code-in-asm
+
+	# For create wav compatible with TS2068
+	#LDFLAGS+=-nostdlib -zorg 32000 -pragma-include:zpragma.inc -clib=sdcc_iy -startup=31 -Cz--extreme -Cz--screen -Czspace3.scr -Cz--turbo -Cz--audio --opt-code-speed --list --c-code-in-asm
+	# For .tap, compatible with TS2068, normal, no turbo
+	LDFLAGS+=-nostdlib -zorg 32000 -pragma-include:zpragma.inc -clib=sdcc_iy -startup=31 -Cz--merge -Czloader.tap -Cz--screen -Czspace3.scr --opt-code-speed --list --c-code-in-asm
 	EXEC=$(EXEC_OUTPUT).tap
 endif
 
@@ -60,10 +66,10 @@ ifeq ("$(TARGET)","+zx81")
 #	CFLAGS+=-pragma-include:zx81pragma.inc --opt-code-speed --list --c-code-in-asm -D__NOSOUND__
 
 	# Full Choma81
-#	LDFLAGS+=-nostdinc -pragma-include:zx81pragma.inc -subtype=chroma -clib=wrx -startup=23 --opt-code-speed
+	LDFLAGS+=-nostdinc -pragma-include:zx81pragma.inc -subtype=chroma -clib=wrx -startup=23 --opt-code-speed
 
 	# Basic Chroma81
-	LDFLAGS+=-nostdinc -pragma-include:zx81pragma.inc -subtype=wrx -clib=wrx -startup=3 --opt-code-speed
+#	LDFLAGS+=-nostdinc -pragma-include:zx81pragma.inc -subtype=wrx -clib=wrx -startup=3 --opt-code-speed
 
 	# --list --c-code-in-asm
 	EXEC=$(EXEC_OUTPUT).P

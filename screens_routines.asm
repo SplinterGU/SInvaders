@@ -30,6 +30,8 @@ inputTab:
     dw inputTab_str4
     dw inputTab_str5
     dw inputTab_str6
+    dw inputTab_str7
+    dw inputTab_str8
 
 inputTab_items: equ ( $-inputTab ) / 2
 
@@ -39,6 +41,8 @@ inputTab_str3: db "SINCLAIR 1", 0
 inputTab_str4: db "SINCLAIR 2", 0
 inputTab_str5: db "  KEMPSTON", 0
 inputTab_str6: db "    FULLER", 0
+inputTab_str7: db "   TIMEX 1", 0
+inputTab_str8: db "   TIMEX 2", 0
 ENDIF
 
 ; *********************************************

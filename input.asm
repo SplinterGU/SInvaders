@@ -174,6 +174,8 @@ IFDEF __SPECTRUM__
     jp i_sinclar2
     jp i_kempston
     jp i_fuller
+    jp i_ts2068_1
+    jp i_ts2068_2
 ENDIF
 
 i_keyboad:
@@ -362,6 +364,48 @@ test_fuller_end:
     ld a,l
     ld (_input),a   ; fire + left + right
     ret
+
+i_ts2068_1:
+    ld h,1
+
+ts2068_common:
+    ld a,7
+    out (0xf5),a  ;set r7
+
+    in a,(0xf6)
+    and 0xbf      ;clear bit 6 to read from i/o port a - r14
+    out (0xf6),a
+
+    ld a,14
+    out (0xf5),a  ;set r14
+    ld a,h        ;(3=both joysticks, 2=left only, 1=right only)
+
+    ld l,0
+
+    in a,(0xf6)   ;(fxxxrldu, active low)
+    bit 2,a       ; left
+    jp nz, test_ts2068_right
+    set 0,l
+
+test_ts2068_right:
+    bit 3,a
+    jp nz, test_ts2068_shot
+    set 1,l
+
+test_ts2068_shot:
+    bit 7,a
+    jp nz, test_ts2068_end
+    set 2,l
+
+test_ts2068_end:
+    ld a,l
+    ld (_input),a   ; fire + left + right
+    ret
+
+i_ts2068_2:
+    ld h,2
+    jp ts2068_common
+
 ENDIF
 
 ; -------------------------------------------------
