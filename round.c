@@ -848,7 +848,7 @@ int8_t iterGame() {
 
             // Shot collision with saucer
             if ( !state1.killed && saucerActive > 0 && 
-                  shotY + 4 >= SAUCERROW && shotY + 7 < SAUCERROW + 8 &&
+                  shotY + 8 > SAUCERROW && shotY + 4 < SAUCERROW + 8 &&
                   shotX >= saucerX + 4 && shotX < saucerX + 20
                ) {
                 deleteOldPlayerShot();
