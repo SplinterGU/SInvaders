@@ -848,7 +848,7 @@ int8_t iterGame() {
 
             // Shot collision with saucer
             if ( !state1.killed && saucerActive > 0 && 
-                  shotY + 8 >= SAUCERROW && shotY + 4 < ( SAUCERROW + 8 ) &&
+                  shotY + 4 >= SAUCERROW && shotY + 7 < SAUCERROW + 8 &&
                   shotX >= saucerX + 4 && shotX < saucerX + 20
                ) {
                 deleteOldPlayerShot();
@@ -863,28 +863,51 @@ int8_t iterGame() {
                 state1.killed = 1;
             }
 
-            if ( !state1.killed ) collision = Point( shotX, shotY + 4 ) || Point( shotX, shotY + 5 ) ||
-                                              Point( shotX, shotY + 6 ) || Point( shotX, shotY + 7 ) ;
-
-            if ( collision ) {
-                // Shot collision with shield
-                if ( !state1.killed && shotY + 8 > playerPtr->currentShieldTopY && shotY + 4 < SHIELDTOPY + 24 ) {
+            // Shot collision with shield
+            if ( !state1.killed && shotY + 8 > playerPtr->currentShieldTopY && shotY + 4 < SHIELDTOPY + 16 ) {
+                if ( Point( shotX, shotY + 4 ) || Point( shotX, shotY + 5 ) ||
+                     Point( shotX, shotY + 6 ) || Point( shotX, shotY + 7 ) ) {
                     deleteOldPlayerShot();
                     shotY = -( shotY + 2 );
                     drawShotExploding( -shotY );
                     shotExplodingCnt = 6; //60;
                     state1.killed = 1;
                 }
+            }
 
-                // Shot collision with aliens
-                if ( !state1.killed ) {
-                    int16_t idx = getAlienIdx( shotX, shotY /*+ 4 - 6*/, 0 ), lowest;
+            // Shot collision with aliens
+            if ( !state1.killed ) {
+                int16_t idx = getAlienIdx( shotX, shotY /*+ 4 - 6*/, 0 ), lowest;
 
-                    if ( idx >= 0 && idx < 55 && playerPtr->aliens[ idx ] ) {
-                        getAliensDeltaPos2( idx, &alienExplodingX, &alienExplodingY );
-                        alienExplodingX += playerPtr->aliensX;
-                        alienExplodingY += playerPtr->aliensY;
+                if ( idx >= 0 && idx < 55 && playerPtr->aliens[ idx ] ) {
 
+// Alien A = 12px width (2 + 12 + 2)
+// Alien B = 11px width (3 left + 11 alien + 2 right)
+// Alien C = 8px width  (4 + 8 + 4)
+                    getAliensDeltaPos2( idx, &alienExplodingX, &alienExplodingY );
+                    alienExplodingX += playerPtr->aliensX;
+                    alienExplodingY += playerPtr->aliensY;
+
+                    int hit = 0;
+
+                    switch ( aRow ) {
+                        case 0:
+                        case 1:
+                            if ( shotX >= alienExplodingX + 2 && shotX < alienExplodingX + 14 ) hit = 1;
+                            break;
+
+                        case 2:
+                        case 3:
+                            if ( shotX >= alienExplodingX + 3 && shotX < alienExplodingX + 14 ) hit = 1;
+                            break;
+
+                        case 4:
+                            if ( shotX >= alienExplodingX + 4 && shotX < alienExplodingX + 12 ) hit = 1;
+                            break;
+
+                    }
+
+                    if ( hit ) {
                         deleteOldPlayerShot();
                         PutSprite2( alienExplodingX, alienExplodingY, AlienExplode );
 
