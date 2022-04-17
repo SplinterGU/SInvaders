@@ -1,8 +1,11 @@
 #include <stdint.h>
-//#include <string.h>
 
 #ifdef __SPECTRUM__
+#ifdef __ZXN__
+#include <arch/zxn.h>
+#else
 #include <arch/zx.h>
+#endif
 #include <z80.h>
 
 #include "isr.h"
@@ -24,9 +27,76 @@ long heap;
 #include "round.h"
 #include "round_routines.h"
 #include "charset.h"
+
+#ifdef __ZXN__
+#include "zxn_sound_engine.h"
+#else
 #include "sound.h"
+#endif
 
 #include "input.h"
+
+#ifdef __ZXN__
+#include "background.h"
+#endif
+
+/* ********************************************* */
+
+#ifdef __ZXN__
+#define REG_LAYER_2_CONTROL  112
+#define LAYER_2_320x256x8    0x10
+
+/* ********************************************* */
+
+void intro_screen() {
+
+    // Disable LUA
+    IO_NEXTREG_REG = 0x68;
+    uint8_t current_ula_status = IO_NEXTREG_DAT;
+    IO_NEXTREG_DAT = current_ula_status | 0x80; 
+
+    // Select Background Bank
+    IO_NEXTREG_REG = REG_LAYER_2_RAM_BANK;
+    IO_NEXTREG_DAT = 14;
+
+    // Setup Palette
+    IO_NEXTREG_REG = REG_PALETTE_CONTROL;
+    IO_NEXTREG_DAT = 0x10;
+
+    IO_NEXTREG_REG = REG_PALETTE_INDEX;
+    IO_NEXTREG_DAT = 0;
+
+    IO_NEXTREG_REG = REG_PALETTE_VALUE_16;
+    for (int i = 0; i < 512; i++) IO_NEXTREG_DAT = intro_screen_pal[i];
+
+    // Delay
+    DelayFrames( 400 );
+
+    // Restore ULA
+    IO_NEXTREG_REG = 0x68;
+    IO_NEXTREG_DAT = current_ula_status;
+
+}
+
+/* ********************************************* */
+
+void background_screen() {
+    // Select Background Bank
+    IO_NEXTREG_REG = REG_LAYER_2_RAM_BANK;
+    IO_NEXTREG_DAT = 9;
+
+    // Setup Palette
+    IO_NEXTREG_REG = REG_PALETTE_CONTROL;
+    IO_NEXTREG_DAT = 0x10;
+
+    IO_NEXTREG_REG = REG_PALETTE_INDEX;
+    IO_NEXTREG_DAT = 0;
+
+    IO_NEXTREG_REG = REG_PALETTE_VALUE_16;
+    for (int i = 0; i < 512; i++) IO_NEXTREG_DAT = background_pal[i];
+}
+
+#endif
 
 /* ********************************************* */
 
@@ -35,6 +105,50 @@ void main() {
     playersInGame = 0;
 
     int8_t menu = 0;
+
+#ifdef __ZXN__
+
+    // Make sure the Spectrum ROM is paged in initially.
+    IO_7FFD = IO_7FFD_ROM0;
+
+    // Put Z80 in 28 MHz turbo mode.
+    IO_NEXTREG_REG = REG_TURBO_MODE;
+    IO_NEXTREG_DAT = 0x03;
+
+    IO_NEXTREG_REG = REG_LAYER_2_CONTROL;
+    IO_NEXTREG_DAT = LAYER_2_320x256x8;
+
+    // layer2SetClipWindow ( 0, 255, 0, 255); // hide the sprite window
+    IO_NEXTREG_REG = REG_CLIP_WINDOW_LAYER_2;
+    IO_NEXTREG_DAT = 0;
+    IO_NEXTREG_DAT = 255;
+    IO_NEXTREG_DAT = 0;
+    IO_NEXTREG_DAT = 255;
+
+    // Show layer2
+    IO_LAYER_2_CONFIG = IL2C_SHOW_LAYER_2;
+
+    // NextReg 20,$e3                  ; set global transparancy value
+    IO_NEXTREG_REG = 20;
+    IO_NEXTREG_DAT = 0x00;
+
+    // ;NextReg 64,$88                  ; set "bright+black" ULA colour
+    // ;NextReg 65,$e3                  ; set BRIGHT+BLACK to transparent
+
+    IO_NEXTREG_REG = 64;                // set BRIGHT BLACK to transparent
+    IO_NEXTREG_DAT = 0x18;
+    IO_NEXTREG_REG = 65;
+    IO_NEXTREG_DAT = 0x00;
+    // NextReg 65,$e3
+    
+
+//    IO_NEXTREG_REG = 0x68;
+//    IO_NEXTREG_DAT = 64;          // Blending
+
+    IO_NEXTREG_REG = 0x15;
+    IO_NEXTREG_DAT = 3|(4<<2);          // U_S_L ( ULA -> Sprites --> Layer2 )
+
+#endif
 
 #ifdef __ZX81__
     heap = 0L;                      // heap is empty
@@ -48,9 +162,6 @@ void main() {
 #endif
 
 #ifdef __SPECTRUM__
-    // Define FONTS
-//    z80_wpoke( 23606, ( uint16_t ) ( CHARSET - 256 ) );
-
     __asm
         ei
     __endasm;
@@ -61,14 +172,27 @@ void main() {
     InputDetect();
 
 #ifndef __NOSOUND__
+#ifdef __ZXN__
+    SoundInit();
+#else
     SoundDetectCard();
+#endif
 #endif
 #ifdef __SPECTRUM__
     zx_border(INK_BLACK);
 
+#ifdef __ZXN__
+    zx_cls(PAPER_BLACK|INK_WHITE);
+    intro_screen();
+#endif
+
     DelayFrames( 100 ); // 2 seconds
 
     zx_cls(PAPER_BLACK|INK_WHITE);
+#endif
+
+#ifdef __ZXN__
+    background_screen();
 #endif
 
     DrawScreenColors();
@@ -128,6 +252,9 @@ main_menu:
             _ExitIfKeyPressed = 0;
             if ( syskey.showSetup ) { ret = setup_Screen(); syskey.keyPressed = 0; }
             if ( syskey.showHelp  ) { ret = help_Screen();  syskey.keyPressed = 0; }
+#ifdef __ZXN__
+            if ( syskey.showIntro ) { intro_screen(); background_screen(); syskey.keyPressed = 0; ret = 0; }
+#endif
         } while ( !ret && !numCredits );
     }
 
@@ -139,6 +266,9 @@ main_menu:
 #endif
         if ( syskey.showSetup ) { ret = setup_Screen(); syskey.keyPressed = 0; syskey.keyCredit = 1; }
         if ( syskey.showHelp  ) { ret = help_Screen();  syskey.keyPressed = 0; syskey.keyCredit = 1; }
+#ifdef __ZXN__
+        if ( syskey.showIntro ) { intro_screen(); background_screen(); syskey.keyPressed = 0; syskey.keyCredit = 1; ret = 0; }
+#endif
         if ( syskey.keyCredit ) pushPlayerButton_Screen();
     } while ( !syskey.keyStart1UP && !syskey.keyStart2UP );
 

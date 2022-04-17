@@ -34,6 +34,8 @@
 extern int8_t numLives;
 extern int16_t bonusLife;
 extern int8_t displayCoinage;
+extern int8_t shakeEffect;
+extern int8_t brightActive;
 extern uint8_t numCredits;
 extern uint16_t hiScore;
 extern int8_t playersInGame;

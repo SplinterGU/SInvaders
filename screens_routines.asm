@@ -1,6 +1,7 @@
 EXTERN _ClearRows, _PrintChar, _PrintAt, _PrintAtArr, _PrintNumAt, _WaitFrame
-EXTERN _numLives, _bonusLife, _displayCoinage, _player
+EXTERN _numLives, _bonusLife, _displayCoinage, _shakeEffect, _brightActive, _player
 EXTERN _currentMenuScreen, _syskey
+EXTERN _DrawScreenColors
 
 IFNDEF __NOSOUND__
 EXTERN _soundSystem
@@ -21,6 +22,37 @@ str_on:     db " ON",0
 str_off:    db "OFF",0
 
 ; *********************************************
+
+defc LIVES_Y            = 56
+defc BONUS_LIFE_Y       = 72
+defc DISPLAY_COINAGE_Y  = 88
+defc BRIGHT_Y           = 104
+
+IFDEF __NOSOUND__
+IFDEF __ZX81__
+defc OK_Y               = 128
+ELSE
+defc PLAYER1_INPUT_Y    = 120
+defc PLAYER2_INPUT_Y    = 136
+defc OK_Y               = 160
+ENDIF
+ELSE
+defc SOUND_Y            = 120
+IFDEF __ZXN__
+defc SHAKE_EFFECT_Y     = 120
+defc PLAYER1_INPUT_Y    = 136
+defc PLAYER2_INPUT_Y    = 152
+defc OK_Y               = 176
+ELSE
+IFDEF __ZX81__
+defc OK_Y               = 144
+ELSE
+defc PLAYER1_INPUT_Y    = 136
+defc PLAYER2_INPUT_Y    = 152
+defc OK_Y               = 176
+ENDIF
+ENDIF
+ENDIF
 
 IFDEF __SPECTRUM__
 inputTab:
@@ -47,6 +79,7 @@ ENDIF
 
 ; *********************************************
 
+IFNDEF __ZXN__
 IFNDEF __NOSOUND__
 soundTab:
     dw soundTab_str1
@@ -72,29 +105,38 @@ IFDEF __ZX81__
     soundTab_str6: db "        ZON-X", 0
 ENDIF
 ENDIF
+ENDIF
 
 ; *********************************************
 
 setupScreenTxt:
     db  40,  32
     dw setupScreenTxt_str1
-    db  24,  56
+    db  24, LIVES_Y
     dw setupScreenTxt_str2
-    db  24,  72
+    db  24, BONUS_LIFE_Y
     dw setupScreenTxt_str3
-    db  24,  88
+    db  24, DISPLAY_COINAGE_Y
     dw setupScreenTxt_str4
+    db  24, BRIGHT_Y
+    dw setupScreenTxt_str10
+IFDEF __ZXN__
+    db  24, SHAKE_EFFECT_Y
+    dw setupScreenTxt_str9
+ENDIF
+IFNDEF __ZXN__
 IFNDEF __NOSOUND__
-    db  24, 104
+    db  24, SOUND_Y
     dw setupScreenTxt_str5
 ENDIF
+ENDIF
 IFDEF __SPECTRUM__
-    db  24, 120
+    db  24, PLAYER1_INPUT_Y
     dw setupScreenTxt_str6
-    db  24, 136
+    db  24, PLAYER2_INPUT_Y
     dw setupScreenTxt_str7
 ENDIF
-    db 120, 160
+    db 120, OK_Y
     dw setupScreenTxt_str8
 setupScreenTxt_size: equ ( $ - setupScreenTxt ) / 4
 
@@ -102,14 +144,21 @@ setupScreenTxt_str1: db "* CONFIGURE OPTIONS *",0
 setupScreenTxt_str2: db "LIVES",0
 setupScreenTxt_str3: db "BONUS LIFE",0
 setupScreenTxt_str4: db "DISPLAY COINAGE",0
+setupScreenTxt_str10: db "BRIGHT", 0
+IFDEF __ZXN__
+setupScreenTxt_str9: db "SHAKE EFFECT", 0
+ENDIF
+IFNDEF __ZXN__
 IFNDEF __NOSOUND__
 setupScreenTxt_str5: db "SOUND", 0
+ENDIF
 ENDIF
 IFDEF __SPECTRUM__
 setupScreenTxt_str6: db "1PLAYER INPUT", 0
 setupScreenTxt_str7: db "2PLAYER INPUT", 0
 ENDIF
 setupScreenTxt_str8: db "OK", 0
+
 
 EXTERN _DelayFrames, _SetSoundCard_internal
 
@@ -207,24 +256,37 @@ ENDIF
     cp  0x02
     jp  z,l_setup_display_coinage
     cp  0x03
+    jp  z,l_setup_bright
+    cp  0x04
+
+IFDEF __ZXN__
+    jp  z,l_setup_shake_effect
+    cp  0x05
+ENDIF
+
+IFNDEF __ZXN__
 IFNDEF __NOSOUND__
     jp  z,l_setup_sound_system
-    cp  0x04
+    cp  0x05
 ENDIF
+ENDIF
+
 IFDEF __SPECTRUM__
     jp  z,l_setup_player1_input
-IFDEF __NOSOUND__
-    cp  0x04
-ELSE
-    cp  0x05
-ENDIF
+    IFDEF __NOSOUND__
+        cp  0x05
+    ELSE
+        cp  0x06
+    ENDIF
     jp  z,l_setup_player2_input
-IFDEF __NOSOUND__
-    cp  0x05
-ELSE
-    cp  0x06
+
+    IFDEF __NOSOUND__
+        cp  0x06
+    ELSE
+        cp  0x07
+    ENDIF
 ENDIF
-ENDIF
+
     jp  Z,l_setup_item_ok
     jp  l_setup_exit_switch
 
@@ -235,7 +297,7 @@ l_setup_lifes:
     ld  (x1),a
     ld  a,232
     ld  (x2),a
-    ld  a,56
+    ld  a,LIVES_Y
     ld  (y),a
     
 ;screens.c:426: if ( left && numLives > 3 ) numLives--;
@@ -285,7 +347,7 @@ l_setup_bonus_life:
     ld  (x1),a
     ld  a,232
     ld  (x2),a
-    ld  a,72
+    ld  a,BONUS_LIFE_Y
     ld  (y),a
 
 ;screens.c:437: if ( left ) _bonusLife = 1000;
@@ -323,7 +385,7 @@ l_setup_display_coinage:
     ld  (x1),a
     ld  a,232
     ld  (x2),a
-    ld  a,88
+    ld  a,DISPLAY_COINAGE_Y
     ld  (y),a
 
 ;screens.c:446: if ( left ) displayCoinage = 0;
@@ -349,6 +411,92 @@ l_setup_display_coinage_jmp3:
     ld  a,0x02
     jr  l_setup_set_flags
 
+;screens.c:443: case _brightActive:
+l_setup_bright:
+;screens.c:444: x1 = 200; x2 = 232; y = 88;
+    ld  a,200
+    ld  (x1),a
+    ld  a,232
+    ld  (x2),a
+    ld  a,BRIGHT_Y
+    ld  (y),a
+
+;screens.c:446: if ( left ) _brightActive = 0;
+    ld  hl,_brightActive
+    bit 5,e     ; left
+    jr  Z,l_setup_bright_jmp1
+    xor a
+    cp (hl)
+    jr z,l_setup_bright_jmp1
+    ld  (hl),a
+    push hl
+    push de
+    call    _DrawScreenColors
+    pop de
+    pop hl
+
+l_setup_bright_jmp1:
+;screens.c:447: if ( right ) _brightActive = 1;
+    bit 2,e     ; right
+    jr  z,l_setup_bright_jmp2
+    ld a,0x01
+    cp (hl)
+    jr z,l_setup_bright_jmp2
+    ld  (hl),a
+    push hl
+    push de
+    call    _DrawScreenColors
+    pop de
+    pop hl
+
+l_setup_bright_jmp2:
+;screens.c:449: if ( _brightActive ) flags = 1; else flags = 2;
+    ld  a,(hl)
+    or  a, a
+    jr  Z,l_setup_bright_jmp3
+    ld  a,0x01
+    jp  l_setup_set_flags
+l_setup_bright_jmp3:
+    ld  a,0x02
+    jp  l_setup_set_flags
+
+
+IFDEF __ZXN__
+;screens.c:443: case shakeEffect:
+l_setup_shake_effect:
+;screens.c:444: x1 = 200; x2 = 232; y = 88;
+    ld  a,200
+    ld  (x1),a
+    ld  a,232
+    ld  (x2),a
+    ld  a,SHAKE_EFFECT_Y
+    ld  (y),a
+
+;screens.c:446: if ( left ) shakeEffect = 0;
+    ld  hl,_shakeEffect
+    bit 5,e     ; left
+    jr  Z,l_setup_shake_effect_jmp1
+    ld  (hl),0x00
+
+l_setup_shake_effect_jmp1:
+;screens.c:447: if ( right ) shakeEffect = 1;
+    bit 2,e     ; right
+    jr  z,l_setup_shake_effect_jmp2
+    ld  (hl),0x01
+
+l_setup_shake_effect_jmp2:
+;screens.c:449: if ( shakeEffect ) flags = 1; else flags = 2;
+    ld  a,(hl)
+    or  a, a
+    jr  Z,l_setup_shake_effect_jmp3
+    ld  a,0x01
+    jp  l_setup_set_flags
+l_setup_shake_effect_jmp3:
+    ld  a,0x02
+    jp  l_setup_set_flags
+ENDIF
+
+IFNDEF __ZXN__
 IFNDEF __NOSOUND__
 ;screens.c:452: case 3:
 l_setup_sound_system:
@@ -357,7 +505,7 @@ l_setup_sound_system:
     ld  (x1),a
     ld  a,232
     ld  (x2),a
-    ld  a,104
+    ld  a,SOUND_Y
     ld  (y),a
 
 ;screens.c:479: if ( left  && soundSystem ) soundSystem--;
@@ -398,6 +546,7 @@ l_setup_sound_system_jmp3:
     or  0x02
     jp  l_setup_set_flags
 ENDIF
+ENDIF
 
 IFDEF __SPECTRUM__
 ;screens.c:452: case 3:
@@ -407,7 +556,7 @@ l_setup_player1_input:
     ld  (x1),a
     ld  a,232
     ld  (x2),a
-    ld  a,120
+    ld  a,PLAYER1_INPUT_Y
     ld  (y),a
 
 ;screens.c:479: if ( left  && player[0].input ) player[0].input--;
@@ -455,7 +604,7 @@ l_setup_player2_input:
     ld  (x1),a
     ld  a,232
     ld  (x2),a
-    ld  a,136
+    ld  a,PLAYER2_INPUT_Y
     ld  (y),a
 
 ;screens.c:479: if ( left  && player[1].input ) player[1].input--;
@@ -504,15 +653,17 @@ l_setup_item_ok:
     ld  (x1),a
     ld  a,112
     ld  (x2),a
-    ld  a,160
+    ld  a,OK_Y
     ld  (y),a
 ;screens.c:490: if ( shot ) {
     bit 0,e     ; shot
     jr  Z,l_setup_continue
 ;screens.c:491: syskey.keyPressed = 0;
+IFNDEF __ZXN__
 IFNDEF __NOSOUND__
     ld  a,(_soundSystem)
     call _SetSoundCard_internal
+ENDIF
 ENDIF
     xor a
     ld  (_syskey),a
@@ -542,16 +693,16 @@ l_setup_exit_switch:
     jp p, l_setup_delete_cursor
 IFDEF __SPECTRUM__
 IFDEF __NOSOUND__
-    ld a, 0x05      ; cursor new pos
-ELSE
     ld a, 0x06      ; cursor new pos
+ELSE
+    ld a, 0x07      ; cursor new pos
 ENDIF
 ENDIF
 IFDEF __ZX81__
 IFDEF __NOSOUND__
-    ld a, 0x03      ; cursor new pos
-ELSE
     ld a, 0x04      ; cursor new pos
+ELSE
+    ld a, 0x05      ; cursor new pos
 ENDIF
 ENDIF
     ld (hl),a
@@ -563,16 +714,16 @@ l_setup_down_pressed:
     ld a,(hl)
 IFDEF __SPECTRUM__
 IFDEF __NOSOUND__
-    cp 0x06         ; cursor limit
-ELSE
     cp 0x07         ; cursor limit
+ELSE
+    cp 0x08         ; cursor limit
 ENDIF
 ENDIF
 IFDEF __ZX81__
 IFDEF __NOSOUND__
-    cp 0x04         ; cursor limit
-ELSE
     cp 0x05         ; cursor limit
+ELSE
+    cp 0x06         ; cursor limit
 ENDIF
 ENDIF
     jr c, l_setup_delete_cursor
@@ -646,7 +797,7 @@ l_setup_print_values:
     sbc a, a
     ld  b, a
     push bc
-    ld  de,0x38e0
+    ld  de,LIVES_Y*256+224
     push de
     call _PrintNumAt
     pop af
@@ -659,7 +810,7 @@ l_setup_print_values:
     inc sp
     ld  hl, (_bonusLife)
     push hl
-    ld  de,0x48c8
+    ld  de,BONUS_LIFE_Y*256+200
     push de
     call _PrintNumAt
     pop af
@@ -674,12 +825,43 @@ l_setup_print_values:
     ld  bc,str_on
 l_setup_print_display_coinage_off:
     push bc
-    ld  de,0x58d0
+    ld  de,DISPLAY_COINAGE_Y*256+208
     push de
     call _PrintAt
     pop af
     pop af
 
+;screens.c:509: PrintAt( 208, ..., brightActive ? " ON" : "OFF" );
+    ld  a,(_brightActive)
+    or  a, a
+    ld  bc,str_off
+    jr  Z,l_setup_print_bright_off
+    ld  bc,str_on
+l_setup_print_bright_off:
+    push bc
+    ld  de,BRIGHT_Y*256+208
+    push de
+    call _PrintAt
+    pop af
+    pop af
+
+IFDEF __ZXN__
+;screens.c:509: PrintAt( 208, ..., shakeEffect ? " ON" : "OFF" );
+    ld  a,(_shakeEffect)
+    or  a, a
+    ld  bc,str_off
+    jr  Z,l_setup_print_shake_effect_off
+    ld  bc,str_on
+l_setup_print_shake_effect_off:
+    push bc
+    ld  de,SHAKE_EFFECT_Y*256+208
+    push de
+    call _PrintAt
+    pop af
+    pop af
+ENDIF
+
+IFNDEF __ZXN__
 IFNDEF __NOSOUND__
 ;screens.c:515: PrintAt( 128, 104, soundTab[ soundSystem ] );
     ld  a,(_soundSystem)
@@ -692,11 +874,12 @@ IFNDEF __NOSOUND__
     inc hl
     ld  b, (hl)
     push bc
-    ld  de,0x6880
+    ld  de,SOUND_Y*256+128
     push de
     call _PrintAt
     pop af
     pop af
+ENDIF
 ENDIF
 
 IFDEF __SPECTRUM__
@@ -711,7 +894,7 @@ IFDEF __SPECTRUM__
     inc hl
     ld  b, (hl)
     push bc
-    ld  de,0x7898
+    ld  de,PLAYER1_INPUT_Y*256+152
     push de
     call _PrintAt
     pop af
@@ -728,7 +911,7 @@ IFDEF __SPECTRUM__
     inc hl
     ld  b, (hl)
     push bc
-    ld  de,0x8898
+    ld  de,PLAYER2_INPUT_Y*256+152
     push de
     call _PrintAt
     pop af

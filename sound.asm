@@ -24,11 +24,10 @@ soundPIORegister:   dw 0
 soundPIOData:       dw 0
 
 IFDEF __SPECTRUM__
-_playingSound:      db 0
+_playingSound:      db -1
 soundStopped:       db 0
 
 soundPriority:
-    db    0 ; NO SOUND
     db   20 ; SOUND_UFO                A
     db   10 ; SOUND_PLAYER_SHOT        B
     db   50 ; SOUND_PLAYER_EXPLOSION   C
@@ -74,7 +73,6 @@ extra_life_sound:
 extra_life_sound_sz: equ $-extra_life_sound
 
 ay_sounds:
-    dw 0
     dw ufo_sound
     dw player_shot_sound
     dw player_explosion_sound
@@ -87,7 +85,6 @@ ay_sounds:
     dw extra_life_sound
 
 ay_sounds_sz:
-    dw 0
     dw ufo_sound_sz
     dw player_shot_sound_sz
     dw player_explosion_sound_sz
@@ -100,7 +97,7 @@ ay_sounds_sz:
     dw extra_life_sound_sz
 
 ay_used_channels_id:
-    db 0, 0, 0
+    db -1, -1, -1
 
 ay_play_remains:
     dw 0, 0, 0
@@ -297,9 +294,9 @@ IFDEF __SPECTRUM__
     cp  SOUND_SYS_BEEPER
     jr  nz, l_SoundPlay_no_sound_beeper
 
-;sound.c:190: if ( playingSound )
+;sound.c:190: if ( playingSound != -1 )
     ld  a,(_playingSound)
-    or  a
+    cp -1
     jr  z,l_SoundPlay_Sound_not_playing
 
 ;sound.c:191: if ( soundPriority[ playingSound ] >= soundPriority[ id ] ) return;
@@ -357,7 +354,7 @@ l_SoundPlay_loop:
     cp  c           ; sound id is playing on this channel?
     ret z           ; already playing
 
-    or  a           ; channel is free?
+    cp  -1          ; channel is free?
     jr  nz, l_SoundPlay_next
     ld  e, d        ; available = idx
 
@@ -441,10 +438,10 @@ IFDEF __SPECTRUM__
 ;sound.c:160: stopFX();
     call _stopFX
 ;sound.c:161: playingSound = 0;
-    xor a
+    ld  a,-1
     ld  (_playingSound),a
 ;sound.c:162: soundStopped = 1;
-    inc a
+    ld  a,1
     ld  (soundStopped),a
 ENDIF
     ret
@@ -477,7 +474,7 @@ ENDIF
 ;    ld  a,255
 ;    out (c),a
 
-    xor a
+    ld a,-1
     ld (ay_used_channels_id),a
     ld (ay_used_channels_id+1),a
     ld (ay_used_channels_id+2),a
@@ -505,8 +502,8 @@ execute_channel:
     ld  a,(ay_used_channels_id)
 used1: equ $-2
 
-    or  a
-    ret z                   ; !ay_used_channels_id[ channel ] then return
+    cp -1
+    ret z                   ; ay_used_channels_id[ channel ] == -1 then return
 
     ld  hl,(ay_play_remains)
 remains1: equ $-2
@@ -626,12 +623,13 @@ free_channel:
 volume2: equ $-1
     out (c),a
 
+    ld  a,-1
+    ld  (ay_used_channels_id),a     ; free channel
+used2: equ $-2
+
     ld  bc,(soundPIOData)
     xor a
     out (c),a               ; set volume to 0
-
-    ld  (ay_used_channels_id),a     ; free channel
-used2: equ $-2
 
     ; de = 0
     ld  d,a
@@ -673,7 +671,7 @@ IFDEF __SPECTRUM__
 
     ld hl,_playingSound
     ld a,(hl)
-    or a
+    cp -1
     ret z
     
     ld l,(hl)
@@ -686,7 +684,8 @@ IFDEF __SPECTRUM__
     or a
     jp nz, set_stopped
     
-    ld (_playingSound),a ; = 0
+    ld a,-1
+    ld (_playingSound),a ; = -1 no playing sound
     ret
 
 set_stopped:

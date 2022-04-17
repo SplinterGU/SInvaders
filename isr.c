@@ -6,6 +6,7 @@
 #include "round.h"
 #include "round_routines.h"
 #include "input.h"
+#include "isr.h"
 
 /* ********************************************* */
 
@@ -27,14 +28,17 @@ IM2_DEFINE_ISR_WITH_BASIC( isr ) {
 #define JUMP_POINT             (( unsigned char * )(( unsigned int )( JUMP_POINT_HIGH_BYTE * UI_256 ) + JUMP_POINT_HIGH_BYTE ))
 
 /* ********************************************* */
-extern void * isr_table;
+
 void init_frames_isr() {
   /* Set up the interrupt vector table */
   im2_init( TABLE_ADDR );
 
+#ifndef __ZXN__
+  // TABLE_ADDR = 64512
   memset( TABLE_ADDR, JUMP_POINT_HIGH_BYTE, 257 );
 
+  // 64507
   z80_bpoke( JUMP_POINT    , 195 );
+#endif
   z80_wpoke( JUMP_POINT + 1, ( unsigned int ) isr );
-
 }

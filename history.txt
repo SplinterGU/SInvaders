@@ -47,3 +47,31 @@ Version 1.4
 Version 1.4.1
 
 - TS2068/TC2068 Joystick Support
+
+Version 1.5
+
+- Megadrive / Sega Genesis Version
+- Real digital sounds
+- Add alien shot explosion when collision with player shot
+- Some internal changes
+
+Version 1.6
+
+- Add floor pixel changes when alien shot explosion disappear (emulate original arcade) (Megadrive/Sega Genesis)
+- Add gel overlay emulation (Megadrive/Sega Genesis)
+- Add multicolor mode (Megadrive/Sega Genesis)
+- Add shake effect (Megadrive/Sega Genesis)
+- Support Soft Reset (Megadrive/Sega Genesis)
+
+Version 1.6.1
+
+- ZX Spectrum Next Version
+- 4 channels DMA digital sounds support
+- Add Brigth configuration
+- Background 360x256 (ZXNext)
+- Add Intro Screen (ZXNext)
+
+Version 1.6.2
+
+- Fix stop alien heartbeat sound when an alien is destroyed (ZXNext)
+- Fix sound glitch when stage change (ZXNext)

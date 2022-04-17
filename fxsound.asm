@@ -15,7 +15,7 @@ _stopFX:
 
 _playFX:
 	ld a,l
-	dec a
+;	dec a
 
 	ld hl,SoundEffectsData	;address of sound effects data
 

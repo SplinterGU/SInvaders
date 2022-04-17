@@ -19,16 +19,16 @@
 #define DEMOSPEED       50
 
 
-#define SOUND_UFO               1
-#define SOUND_PLAYER_SHOT       2
-#define SOUND_PLAYER_EXPLOSION  3
-#define SOUND_ALIEN_EXPLOSION   4
-#define SOUND_ALIEN_STEP1       5
-#define SOUND_ALIEN_STEP2       6
-#define SOUND_ALIEN_STEP3       7
-#define SOUND_ALIEN_STEP4       8
-#define SOUND_UFO_EXPLOSION     9
-#define SOUND_EXTRA_LIFE        10
+#define SOUND_UFO               0
+#define SOUND_PLAYER_SHOT       1
+#define SOUND_PLAYER_EXPLOSION  2
+#define SOUND_ALIEN_EXPLOSION   3
+#define SOUND_ALIEN_STEP1       4
+#define SOUND_ALIEN_STEP2       5
+#define SOUND_ALIEN_STEP3       6
+#define SOUND_ALIEN_STEP4       7
+#define SOUND_UFO_EXPLOSION     8
+#define SOUND_EXTRA_LIFE        9
 
 #define SOUND_SYS_OFF           0
 #define SOUND_SYS_ZONX          1

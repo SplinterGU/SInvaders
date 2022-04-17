@@ -1,6 +1,11 @@
 #ifdef __SPECTRUM__
-//#include <string.h>
+#ifdef __ZXN__
+#include <arch/zxn.h>
+#include <stdlib.h>
+#else
 #include <arch/zx.h>
+#endif
+//#include <string.h>
 #include <z80.h>
 #endif
 
@@ -16,7 +21,11 @@
 #include "input.h"
 
 #ifndef __NOSOUND__
+#ifdef __ZXN__
+#include "zxn_sound_engine.h"
+#else
 #include "sound.h"
+#endif
 #endif
 
 #include "round_routines.h"
@@ -105,7 +114,6 @@ struct {
     uint8_t waitForEventsComplete:1;
     uint8_t downFleet:2;
 } state1;
-
 
 /* ********************************************* */
 // playerPtr->alienIdx is the current idx
@@ -603,8 +611,24 @@ int8_t iterGame() {
     // Clear Alien Explosion
     if ( alienExplodingCnt ) {
         alienExplodingCnt--;
+#ifdef __ZXN__
+        if ( !state1.demo && shakeEffect ) {
+            IO_NEXTREG_REG = 22;                // offset X
+            IO_NEXTREG_DAT = ( rand() % 2 );
+            IO_NEXTREG_REG = 23;                // offset Y
+            IO_NEXTREG_DAT = ( rand() % 2 );
+        }
+#endif
         if ( !alienExplodingCnt ) {
             PutSprite2( alienExplodingX, alienExplodingY, DeleteSprite16 );
+#ifdef __ZXN__
+            if ( !state1.demo && shakeEffect ) {
+                IO_NEXTREG_REG = 22;                // offset X
+                IO_NEXTREG_DAT = 0;
+                IO_NEXTREG_REG = 23;                // offset Y
+                IO_NEXTREG_DAT = 0;
+            }
+#endif
             if ( !playerPtr->numAliens ) {
                 resetPlayer( state1.currPlayer, 0 );
                 return 3; // Next round
@@ -631,12 +655,28 @@ int8_t iterGame() {
     // Saucer Explosion
     if ( saucerActive < 0 ) {
         saucerExplodingCnt--;
+#ifdef __ZXN__
+        if ( !state1.demo && shakeEffect ) {
+            IO_NEXTREG_REG = 22;                // offset X
+            IO_NEXTREG_DAT = ( rand() % 2 );
+            IO_NEXTREG_REG = 23;                // offset Y
+            IO_NEXTREG_DAT = ( rand() % 2 );
+        }
+#endif
         if ( saucerExplodingCnt == 24 ) {
             anybodyExploding = 1;
             handleSauScore();
             if ( !state1.demo ) scoreUpdate( SaucerScrTab[ playerPtr->sauScore ] );
             PrintNumAt( saucerX, 16, SaucerScrTab[ playerPtr->sauScore ], 3 );
         } else if ( !saucerExplodingCnt ) {
+#ifdef __ZXN__
+            if ( !state1.demo && shakeEffect ) {
+                IO_NEXTREG_REG = 22;                // offset X
+                IO_NEXTREG_DAT = 0;
+                IO_NEXTREG_REG = 23;                // offset Y
+                IO_NEXTREG_DAT = 0;
+            }
+#endif
             // ClearRows( 16, 8 );
             PutChars( saucerX, 16, ' ', 3, 0 );
             saucerActive = 0;
@@ -766,10 +806,26 @@ int8_t iterGame() {
         playerExplodingCnt--;
         if ( playerExplodingCnt ) {
             anybodyExploding = 1;
+#ifdef __ZXN__
+            if ( !state1.demo && shakeEffect ) {
+                IO_NEXTREG_REG = 22;                // set BRIGHT BLACK to transparent
+                IO_NEXTREG_DAT = ( rand() % 2 ) * 3;
+                IO_NEXTREG_REG = 23;                // set BRIGHT BLACK to transparent
+                IO_NEXTREG_DAT = ( rand() % 2 ) * 3;
+            }
+#endif
             if ( !( playerExplodingCnt & 0x03 ) ) {
                 PutSprite2( playerX, PLAYERY, ( void * ) ( PlrBlowupSprites + ( ( playerExplodingCnt & 0x04 ) * 4 ) ) );
             }
         } else {
+#ifdef __ZXN__
+            if ( !state1.demo && shakeEffect ) {
+                IO_NEXTREG_REG = 22;                // offset X
+                IO_NEXTREG_DAT = 0;
+                IO_NEXTREG_REG = 23;                // offset Y
+                IO_NEXTREG_DAT = 0;
+            }
+#endif
             PutSprite2( playerX, PLAYERY, DeleteSprite16 );
             playerPtr->numShips--;
             DrawShips();
@@ -780,15 +836,14 @@ int8_t iterGame() {
          !anybodyExploding                                                      &&
          !( asRol->explodingCnt | asPlu->explodingCnt | asSqu->explodingCnt )   &&
          !( asRol->active | asPlu->active | asSqu->active | saucerActive )      &&
-/*#ifdef __SPECTRUM__
-#ifndef __NOSOUND__
-         !playingSound                                                          &&
-#endif
-#endif*/
          shotY == -1 
     ) {
 #ifndef __NOSOUND__
+#ifdef __ZXN__
+        SoundStop( -1 );
+#else
         if ( !state1.demo ) SoundStopAll();
+#endif
 #endif
         if ( state1.demo ) return 0; // demo complete
 
@@ -848,7 +903,7 @@ int8_t iterGame() {
 
             // Shot collision with saucer
             if ( !state1.killed && saucerActive > 0 && 
-                  shotY + 8 > SAUCERROW && shotY + 4 < SAUCERROW + 8 &&
+                  shotY + 8 >= SAUCERROW && shotY + 4 < ( SAUCERROW + 8 ) &&
                   shotX >= saucerX + 4 && shotX < saucerX + 20
                ) {
                 deleteOldPlayerShot();
@@ -857,57 +912,39 @@ int8_t iterGame() {
                 saucerExplodingCnt = 32;
 
 #ifndef __NOSOUND__
-                if ( !state1.demo ) SoundPlay( SOUND_UFO_EXPLOSION );
+                if ( !state1.demo ) {
+#ifdef __ZXN__
+                    SoundStop( SOUND_UFO );
+#endif
+                    SoundPlay( SOUND_UFO_EXPLOSION );
+                }
 #endif
                 shotY = -1;
                 state1.killed = 1;
             }
 
-            // Shot collision with shield
-            if ( !state1.killed && shotY + 8 > playerPtr->currentShieldTopY && shotY + 4 < SHIELDTOPY + 16 ) {
-                if ( Point( shotX, shotY + 4 ) || Point( shotX, shotY + 5 ) ||
-                     Point( shotX, shotY + 6 ) || Point( shotX, shotY + 7 ) ) {
+            if ( !state1.killed ) collision = Point( shotX, shotY + 4 ) || Point( shotX, shotY + 5 ) ||
+                                              Point( shotX, shotY + 6 ) || Point( shotX, shotY + 7 ) ;
+
+            if ( collision ) {
+                // Shot collision with shield
+                if ( !state1.killed && shotY + 8 > playerPtr->currentShieldTopY && shotY + 4 < SHIELDTOPY + 24 ) {
                     deleteOldPlayerShot();
                     shotY = -( shotY + 2 );
                     drawShotExploding( -shotY );
                     shotExplodingCnt = 6; //60;
                     state1.killed = 1;
                 }
-            }
 
-            // Shot collision with aliens
-            if ( !state1.killed ) {
-                int16_t idx = getAlienIdx( shotX, shotY /*+ 4 - 6*/, 0 ), lowest;
+                // Shot collision with aliens
+                if ( !state1.killed ) {
+                    int16_t idx = getAlienIdx( shotX, shotY /*+ 4 - 6*/, 0 ), lowest;
 
-                if ( idx >= 0 && idx < 55 && playerPtr->aliens[ idx ] ) {
+                    if ( idx >= 0 && idx < 55 && playerPtr->aliens[ idx ] ) {
+                        getAliensDeltaPos2( idx, &alienExplodingX, &alienExplodingY );
+                        alienExplodingX += playerPtr->aliensX;
+                        alienExplodingY += playerPtr->aliensY;
 
-// Alien A = 12px width (2 + 12 + 2)
-// Alien B = 11px width (3 left + 11 alien + 2 right)
-// Alien C = 8px width  (4 + 8 + 4)
-                    getAliensDeltaPos2( idx, &alienExplodingX, &alienExplodingY );
-                    alienExplodingX += playerPtr->aliensX;
-                    alienExplodingY += playerPtr->aliensY;
-
-                    int hit = 0;
-
-                    switch ( aRow ) {
-                        case 0:
-                        case 1:
-                            if ( shotX >= alienExplodingX + 2 && shotX < alienExplodingX + 14 ) hit = 1;
-                            break;
-
-                        case 2:
-                        case 3:
-                            if ( shotX >= alienExplodingX + 3 && shotX < alienExplodingX + 14 ) hit = 1;
-                            break;
-
-                        case 4:
-                            if ( shotX >= alienExplodingX + 4 && shotX < alienExplodingX + 12 ) hit = 1;
-                            break;
-
-                    }
-
-                    if ( hit ) {
                         deleteOldPlayerShot();
                         PutSprite2( alienExplodingX, alienExplodingY, AlienExplode );
 
@@ -920,6 +957,12 @@ int8_t iterGame() {
                         if ( !state1.demo ) {
                             scoreUpdate( AlienScores[ aRow ] );
 #ifndef __NOSOUND__
+//#ifdef __ZXN__
+//                            SoundStop( SOUND_ALIEN_STEP1 );
+//                            SoundStop( SOUND_ALIEN_STEP2 );
+//                            SoundStop( SOUND_ALIEN_STEP3 );
+//                            SoundStop( SOUND_ALIEN_STEP4 );
+//#endif
                             SoundPlay( SOUND_ALIEN_EXPLOSION );
 #endif
                         }
@@ -1038,6 +1081,12 @@ int8_t playGame( int8_t _demo ) {
 
 start_round:
     gameState = 0;
+
+#ifndef __NOSOUND__
+#ifdef __ZXN__
+    SoundStop( -1 );
+#endif
+#endif
 
     ClearRows( 16, 168 );
 

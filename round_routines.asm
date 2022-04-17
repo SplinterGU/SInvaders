@@ -25,29 +25,33 @@ include "common.inc"
 ;state1 | 0x20      waitForEventsComplete
 ;state1 & 0xEF      playerIsAlive = 0
 
-DEMO_BIT:                   equ 0
-KILLED_BIT:                 equ 1
-SHOTREADY_BIT:              equ 2
-CURRPLAYER_BIT:             equ 3
-PLAYERISALIVE_BIT:          equ 4
-WAITFOREVENTSCOMPLETE_BIT:  equ 5
-;DOWNFLEET_BIT:              equ 6
+defc DEMO_BIT                   = 0
+defc KILLED_BIT                 = 1
+defc SHOTREADY_BIT              = 2
+defc CURRPLAYER_BIT             = 3
+defc PLAYERISALIVE_BIT          = 4
+defc WAITFOREVENTSCOMPLETE_BIT  = 5
+;defc DOWNFLEET_BIT              = 6
 
-DEMO_MASK:                  equ 0x01
-KILLED_MASK:                equ 0x02
-SHOTREADY_MASK:             equ 0x04
-CURRPLAYER_MASK:            equ 0x08
-PLAYERISALIVE_MASK:         equ 0x10
-WAITFOREVENTSCOMPLETE_MASK: equ 0x20
-DOWNFLEET_1_MASK:           equ 0x40
-DOWNFLEET_2_MASK:           equ 0x80
-DOWNFLEET_MASK:             equ ( DOWNFLEET_1_MASK | DOWNFLEET_2_MASK )
+defc DEMO_MASK                  = 0x01
+defc KILLED_MASK                = 0x02
+defc SHOTREADY_MASK             = 0x04
+defc CURRPLAYER_MASK            = 0x08
+defc PLAYERISALIVE_MASK         = 0x10
+defc WAITFOREVENTSCOMPLETE_MASK = 0x20
+
+defc DOWNFLEET_1_MASK           = 0x40
+defc DOWNFLEET_2_MASK           = 0x80
+defc DOWNFLEET_MASK             = ( DOWNFLEET_1_MASK | DOWNFLEET_2_MASK )
 
 EXTERN _playerPtr, _playerX, _state1, _playerExplodingCnt
 EXTERN _Point, _Point_internal, _PutSprite1Merge, _PutSprite1Delete
 EXTERN _AShotExplo
 
 IFNDEF __NOSOUND__
+IFDEF __ZXN__
+EXTERN _SoundStop
+ENDIF
 EXTERN _SoundPlay
 ENDIF
 
@@ -139,6 +143,10 @@ _handleAlienShot:
 IFNDEF __NOSOUND__
     and DEMO_MASK
     jp nz, hAS_nosound  ; if ( !state1.demo ) SoundPlay( SOUND_PLAYER_EXPLOSION );
+IFDEF __ZXN__
+    ld l, SOUND_PLAYER_SHOT
+    call _SoundStop
+ENDIF
     ld l, SOUND_PLAYER_EXPLOSION
     call _SoundPlay
 hAS_nosound:
@@ -450,8 +458,9 @@ _handleAShotCollision:
     ld e,(ix+1)         ; aniFrame
     ld d,0              ;
     add hl,de           ; sprite + aniframe
-    ld b,(ix+6)         ; y
     ld c,(ix+4)         ; x
+    push bc             ; save x and aShotYH
+    ld b,(ix+6)         ; y
     call _PutSprite1D_internal
 
     ; PutSprite1Delete( shotX, shotYOld + 2, PlayerShotSpr ); // Delete
@@ -498,6 +507,14 @@ _handleAShotCollision:
     ld a,8
     ld (_shotExplodingCnt),a
 
+    ; Draw Alien Shot Explosion
+    pop bc              ; restore x and aShotYH
+    ld a,(ix+6)         ; y
+    add b               ; + aShotYH
+
+    push de             ; for pop in hAS_draw_alien_shot_explosion_Y
+    jp hAS_draw_alien_shot_explosion_Y
+
 hASC_no_collision:
     pop ix
     ret
@@ -517,6 +534,9 @@ SECTION code_user
 EXTERN _aliensFrames, _alienAnimationStatus, _alienSoundCnt, _DeleteTopAlien, _ClearRows
 EXTERN _getAliensDeltaPos
 EXTERN _AlienSprites
+IFDEF __ZXN__
+EXTERN _SoundIsPlaying
+ENDIF
 
 PUBLIC _handleNextAlien
 
@@ -588,15 +608,29 @@ IFNDEF __NOSOUND__
     and DEMO_MASK
     jp nz, hNA_nosound1
 
-IF 0
+IFDEF __ZXN__
+    ld l, SOUND_ALIEN_EXPLOSION ; play alien step sound if no alien explosion
+    call _SoundIsPlaying
+    xor a
+    cp l
+    jr nz, hNA_nosound1
+
     ld hl,_alienSoundCnt
+    add SOUND_ALIEN_STEP1
+    push hl
+    ld l,a
+    call _SoundStop
+    pop hl
     ld a,(hl)
     inc a
     and 0x03
     ld (hl),a
     add SOUND_ALIEN_STEP1
+    ld l, a
 ENDIF
+IFNDEF __ZXN__
     ld l, SOUND_ALIEN_STEP1
+ENDIF
     call _SoundPlay
 hNA_nosound1:
 ENDIF
@@ -796,6 +830,10 @@ hNA_test_alien_reach_player:
 IFNDEF __NOSOUND__
     and DEMO_MASK
     jp nz, hNA_nosound2     ; if ( !state1.demo ) SoundPlay( SOUND_PLAYER_EXPLOSION );
+IFDEF __ZXN__
+    ld l, SOUND_PLAYER_SHOT
+    call _SoundStop
+ENDIF
     ld l, SOUND_PLAYER_EXPLOSION
     call _SoundPlay
 hNA_nosound2:
@@ -894,6 +932,14 @@ start_round:
 ;round.c:979: gameState = 0;
     xor  a
     ld  (_gameState),a
+
+
+IFNDEF __NOSOUND__
+IFDEF __ZXN__
+    ld l,-1
+    call _SoundStop
+ENDIF
+ENDIF
 
 ;round.c:981: ClearRows( 16, 168 );
     ld  de, 16 + ( 168 * 256 )
@@ -1022,6 +1068,9 @@ l_playGame_forever_loop:
 ;round.c:1020: gameState = iterGame();
 
 IFNDEF __NOSOUND__
+;    ld  a,(_state1)
+;    and DEMO_MASK
+;    call z,_SoundExecute
     call _SoundExecute
 ENDIF
 IFDEF __ZX81__
@@ -1343,7 +1392,9 @@ l_storeShields_saved:
 ; ---------------------------------
 
 EXTERN _getReloadRate, _numLives, _AlienStartTable, _alienShotInfo, _asRol, _asPlu, _asSqu
+IFNDEF __ZXN__
 EXTERN _SoundStopAll
+ENDIF
 
 PUBLIC _resetPlayer
 
@@ -1588,7 +1639,12 @@ IFNDEF __NOSOUND__
 ;round.c:342: if ( !state1.demo ) SoundStopAll();
     ld  a,(_state1)
     and DEMO_MASK
+IFDEF __ZXN__
+    ld l, -1
+    call z, _SoundStop
+ELSE
     call z, _SoundStopAll
+ENDIF
 ENDIF
     ret
 

@@ -16,6 +16,9 @@ ENDIF
 ;        uint8_t keyStart2UP         :1;
 ;        uint8_t showSetup           :1;
 ;        uint8_t showHelp            :1;
+;#ifdef __ZXN__
+;        uint8_t showIntro           :1;
+;#endif
 ;    };
 ;};
 ;union _syskey syskey;
@@ -73,6 +76,16 @@ _readSysKeys:
     ld a,(_syskey)
     ld d,a
 
+IFDEF __ZXN__
+    ld bc,0xdffe    ; in y-p
+    in a,(c)        ; in y-p
+    cpl             ; in y-p
+    bit 2,a         ; key "I"
+    jp z, test_setup_key
+    set 5,d         ; key show intro 
+ENDIF
+
+test_setup_key:
 ; key setup
     ld bc,0xfefe    ; in CS-V
     in a,(c)        ; in CS-V

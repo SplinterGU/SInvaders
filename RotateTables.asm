@@ -2,9 +2,9 @@
 ; By Juan Jose Ponteprino (original file are missing)
 ; **************************************************************************************************'
 
-SECTION data_align_256
-
 PUBLIC RotateTables
+
+SECTION data_align_256
 
 	align 256
 

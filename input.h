@@ -25,6 +25,9 @@ union _syskey {
         uint8_t keyStart2UP         :1;
         uint8_t showSetup           :1;
         uint8_t showHelp            :1;
+#ifdef __ZXN__
+        uint8_t showIntro           :1;
+#endif
     };
 };
 

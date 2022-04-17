@@ -30,7 +30,7 @@
 #define PAPER_YELLOW   0x60
 #define PAPER_WHITE    0x70
 
-#define BRIGHT         0x80
+#define BRIGHT         0x08
 #define PAPER_BRIGHT   0x80
 #define INK_BRIGHT     0x08
 
@@ -60,23 +60,43 @@ typedef struct {
 
 /* ********************************************* */
 
-scrtextA helpScreenTxt[] = {
-    { 96,   32,          "* HELP *"                },
-    { 40,   56,    "PUSH +/K FOR CREDITS"          },
-    { 80,   72,         "1   FOR 1 PLAYER"         },
-    { 80,   88,         "2   FOR 2 PLAYERS"        },
-    { 80,  104,         "C   FOR CONFIGURE"        },
 #ifdef __SPECTRUM__
-    { 40,  120,    "O/P/CS   FOR KEYBOARD"         },
-    { 80,  136,         "H   FOR THIS HELP"        },
-    { 40,  160,    "ZX SPECTRUM VERSION BY"        },
+#ifdef __ZXN__
+    #define HELP_TXT_Y      24
+    #define HELP_BASE_Y     40
+#else
+    #define HELP_TXT_Y      32
+    #define HELP_BASE_Y     56
+#endif
 #endif
 #ifdef __ZX81__
-    { 16,  120, "O/P/SHIFT   FOR KEYBOARD"         },
-    { 80,  136,         "H   FOR THIS HELP"        },
-    { 64,  160,        "ZX81 VERSION BY"           },
+    #define HELP_TXT_Y      32
+    #define HELP_BASE_Y     56
 #endif
-    { 32,  168,   "JUAN JOSE PONTEPRINO V1.4.1"    }
+
+scrtextA helpScreenTxt[] = {
+    { 96,  HELP_TXT_Y          ,          "* HELP *"                },
+    { 40,  HELP_BASE_Y         ,    "PUSH +/K FOR CREDITS"          },
+    { 80,  HELP_BASE_Y + 16    ,         "1   FOR 1 PLAYER"         },
+    { 80,  HELP_BASE_Y + 16 * 2,         "2   FOR 2 PLAYERS"        },
+    { 80,  HELP_BASE_Y + 16 * 3,         "C   FOR CONFIGURE"        },
+#ifdef __SPECTRUM__
+    { 40,  HELP_BASE_Y + 16 * 4,    "O/P/CS   FOR KEYBOARD"         },
+#ifdef __ZXN__
+    { 80,  HELP_BASE_Y + 16 * 5,         "I   SHOW INTRO SCREEN"    },
+    { 80,  HELP_BASE_Y + 16 * 6,         "H   FOR THIS HELP"        },
+    { 32,                160   ,   "ZX SPECTRUM NEXT VERSION BY"    },
+#else
+    { 80,  HELP_BASE_Y + 16 * 5,         "H   FOR THIS HELP"        },
+    { 40,                160   ,    "ZX SPECTRUM VERSION BY"        },
+#endif
+#endif
+#ifdef __ZX81__
+    { 16,  HELP_BASE_Y + 16 * 4, "O/P/SHIFT   FOR KEYBOARD"         },
+    { 80,  HELP_BASE_Y + 16 * 5,         "H   FOR THIS HELP"        },
+    { 64,                160   ,        "ZX81 VERSION BY"           },
+#endif
+    { 32,                168   ,   "JUAN JOSE PONTEPRINO V1.6.2"    }
 };
 
 scrtextA scoreScreenTxt[] = {
@@ -86,12 +106,10 @@ scrtextA scoreScreenTxt[] = {
     {  96,  160, "=10 POINTS"                      }
 };
 
-//#ifdef __SPECTRUM__
 scrtextA insertCoinScreenTxt[] = {
     {  72, 124, "*1 PLAYER  1 COIN"                },
     {  72, 144, "*2 PLAYERS 2 COINS"               }
 };
-//#endif
 
 /* ********************************************* */
 
@@ -133,16 +151,16 @@ void DrawScreenColors() {
     if ( ScreenAttrAddr ) {
 #endif
         for ( n = 0; n < 24 * COLSBYROW; n++ ) {
-            ScreenAttrAddr[ n ] = PAPER_BLACK | INK_WHITE;
+            ScreenAttrAddr[ n ] = PAPER_BLACK | INK_WHITE | ( brightActive ? BRIGHT : 0 );
         }
         for ( n = 2 * COLSBYROW; n < 4 * COLSBYROW; n++ ) {
-            ScreenAttrAddr[ n ] = PAPER_BLACK | INK_RED;
+            ScreenAttrAddr[ n ] = PAPER_BLACK | INK_RED | ( brightActive ? BRIGHT : 0 );
         }
         for ( n = 18 * COLSBYROW; n < 23 * COLSBYROW; n++ ) {
-            ScreenAttrAddr[ n ] = PAPER_BLACK | INK_GREEN;
+            ScreenAttrAddr[ n ] = PAPER_BLACK | INK_GREEN | ( brightActive ? BRIGHT : 0 );
         }
         for ( n = 23 * COLSBYROW + 3; n < 23 * COLSBYROW + 23; n++ ) {
-            ScreenAttrAddr[ n ] = PAPER_BLACK | INK_GREEN;
+            ScreenAttrAddr[ n ] = PAPER_BLACK | INK_GREEN | ( brightActive ? BRIGHT : 0 );
         }
 #ifdef __ZX81__
     }

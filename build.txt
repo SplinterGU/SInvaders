@@ -1,38 +1,22 @@
-- for ZX81
-
-make TARGET=+zx81 clean
-make TARGET=+zx81
-
-
-note:
-in makefile you must edit (comment/un-coment) this lines:
-
-for sound support:
-
-    OBJECTS=$(OBJS) build/sound.o
-    ASFLAGS+=-Ca-D__ZX81__ --opt-code-speed --list --c-code-in-asm
-    CFLAGS+=-pragma-include:zx81pragma.inc --opt-code-speed --list --c-code-in-asm
-
-no sound (remember comment sound support lines):
-
-   OBJECTS=$(OBJS)
-   ASFLAGS+=-Ca-D__ZX81__ -Ca-D__NOSOUND__ --opt-code-speed --list --c-code-in-asm
-   CFLAGS+=-pragma-include:zx81pragma.inc --opt-code-speed --list --c-code-in-asm -D__NOSOUND__
-
-for full chroma:
-
-    # Full Choma81
-    LDFLAGS+=-nostdinc -pragma-include:zx81pragma.inc -subtype=chroma -clib=wrx -startup=23 --opt-code-speed
-
-for partial chroma or no chroma build (remember comment full chroma line):
-
-    # Basic Chroma81
-    LDFLAGS+=-nostdinc -pragma-include:zx81pragma.inc -subtype=wrx -clib=wrx -startup=3 --opt-code-speed
-
-- for ZX Spectrum
+for ZX Spectrum
+---------------
 
 make clean
 make
 
 
+for ZX81
+--------
+
+make TARGET=+zx81 clean
+make TARGET=+zx81 CHROMA81=[yes|no] SOUND=[yes|no]
+
+* default for CHROMA81 and SOUND is yes
+
+
+for ZX Spectrum Next
+--------------------
+
+make TARGET=+zxn clean
+make TARGET=+zxn
 
