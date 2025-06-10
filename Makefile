@@ -10,7 +10,7 @@ endif
 #C_OPT_FLAGS=-SO3 --max-allocs-per-node200000
 C_OPT_FLAGS=-O3
 
-ASFLAGS=$(TARGET) $(VERBOSITY) -c 
+ASFLAGS=$(TARGET) $(VERBOSITY) -c
 CFLAGS=$(TARGET) $(VERBOSITY)  -compiler sdcc -c $(C_OPT_FLAGS)
 LDFLAGS=$(TARGET) $(VERBOSITY) -compiler sdcc
 
@@ -119,9 +119,11 @@ all: $(EXEC)
 
 build/background.o:  background.asm res/zxn/images/background.png res/zxn/images/intro-screen.png
 	./gfx2next -bitmap -bitmap-y res/zxn/images/background.png
-	split -b8192 -d res/zxn/images/background.nxi res/zxn/images/background- --additional-suffix=.bin
+	split -b8192 -d res/zxn/images/background.nxi res/zxn/images/background-
+	for fname in res/zxn/images/background-*; do mv $$fname $$fname.bin; done
 	./gfx2next -bitmap -bitmap-y res/zxn/images/intro-screen.png
-	split -b8192 -d res/zxn/images/intro-screen.nxi res/zxn/images/intro-screen- --additional-suffix=.bin
+	split -b8192 -d res/zxn/images/intro-screen.nxi res/zxn/images/intro-screen-
+	for fname in res/zxn/images/intro-screen-*; do mv $$fname $$fname.bin; done
 	$(AS) $(ASFLAGS) -o $@ $<
 
 build/isr_table.o: isr_table.asm
@@ -195,4 +197,4 @@ $(EXEC) : $(OBJECTS)
 
 .PHONY: clean
 clean:
-	rm -f build/*.o build/*.bin $(EXEC) $(EXEC_OUTPUT).map
+	rm -f build/*.o build/*.bin $(EXEC) $(EXEC_OUTPUT).map res/zxn/images/*.nxi res/zxn/images/*.nxp res/zxn/images/*.bin
